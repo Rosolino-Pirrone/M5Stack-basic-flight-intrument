@@ -330,8 +330,6 @@ void loop() {
     M5.Lcd.drawString("m", 260, 180, 2);
     M5.Lcd.drawString(NMEA_RMC, 280, 10, 4);
     M5.Lcd.drawString(String(Vario_al_secondo), 0, 0, 7);
-    Serial.println(q_2);
-    Serial.println(EEPROM.get(3, q_2));
     if (altimetro == true) {
       M5.Lcd.drawString(String(int(altitudine)), 0, 120, 7);
       M5.Lcd.drawString("A 1", 260, 120, 2);
