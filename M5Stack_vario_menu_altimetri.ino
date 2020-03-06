@@ -62,6 +62,7 @@ String NMEA_GGA;
 
 bool suono = true;
 bool altimetro = true;
+bool bluetooth = true;
 int element = 0;
 int q_2 = 0;
 int soglia_pos = 0;
@@ -153,7 +154,8 @@ void setup() {
   soglia_pos = EEPROM.read(1);
   soglia_neg = EEPROM.read(2);
   q_2 = EEPROM.get(3, q_2);
-  SerialBT.begin("Arduvario"); //Bluetooth device name
+  bluetooth = EEPROM.read(6);
+  if (bluetooth == true) SerialBT.begin("Arduvario"); //Bluetooth device name
   Serial.println("The device started, now you can pair it with bluetooth!");
   ledcSetup(channel, freq, resolution);
   ledcAttachPin(25, channel);
@@ -276,15 +278,17 @@ void setup() {
 
 void loop() {
   M5.update();
+
   if (rmc_1.isUpdated() ||  gga_1.isUpdated())
   {
-    //count = 0;
+    Serial.print("bluetooth ");
+    Serial.println(bluetooth);
 
     String RMC = ("GNRMC," + String(rmc_1.value()) + "," + rmc_2.value() + "," + String(rmc_3.value()) + "," + rmc_4.value() + "," + String(rmc_5.value()) + "," + rmc_6.value() + "," + String(rmc_7.value()) + "," + String(rmc_8.value()) + "," + String(rmc_9.value()) + "," + String(rmc_10.value()) + "," + String(rmc_11.value()) + "," + rmc_12.value() + ",");
     String checkSum_2 = String(checkSum(RMC), HEX);
     NMEA_RMC = ("$" + RMC + "*" + checkSum_2);
     Serial.println(NMEA_RMC);
-    SerialBT.println(NMEA_RMC);
+    if (bluetooth == true) SerialBT.println(NMEA_RMC);
     int q;
     for (int i = 0; i < 2; i++)
     {
@@ -298,7 +302,7 @@ void loop() {
     String checkSum_ = String(checkSum(GGA), HEX);
     NMEA_GGA = ("$" + GGA + "*" + checkSum_);
     Serial.println(NMEA_GGA);
-    SerialBT.println(NMEA_GGA);
+    if (bluetooth == true) SerialBT.println(NMEA_GGA);
 
 
   }
@@ -328,19 +332,20 @@ void loop() {
     M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
     M5.Lcd.drawString("m/s", 260, 60, 2);
     M5.Lcd.drawString("m", 260, 180, 2);
+    if (bluetooth == true) M5.Lcd.drawString("B", 260, 10, 2);
     M5.Lcd.drawString(NMEA_RMC, 280, 10, 4);
     M5.Lcd.drawString(String(Vario_al_secondo), 0, 0, 7);
     if (altimetro == true) {
       M5.Lcd.drawString(String(int(altitudine)), 0, 120, 7);
       M5.Lcd.drawString("A 1", 260, 120, 2);
     } else {
-    M5.Lcd.drawString(String((int(altitudine) - q_2)), 0, 120, 7);
-    M5.Lcd.drawString("A 2", 260, 120, 2);
+      M5.Lcd.drawString(String((int(altitudine) - q_2)), 0, 120, 7);
+      M5.Lcd.drawString("A 2", 260, 120, 2);
     }
     String cmd = "POV,E," + String(Vario_al_secondo).substring(0, 4) + ",P," + String(Media_P) + ",T," + String(Valori[0] / 100); // calcolo stringa NMEA OpenVario
     String checkSum0 = String(checkSum(cmd), HEX);
     Serial.println("$" + cmd + "*" + checkSum0);              //Stringa alla seriale
-    SerialBT.println("$" + cmd + "*" + checkSum0);
+    if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
 
 
     int Media_P_1 = int(Media_P * 100);
@@ -350,7 +355,7 @@ void loop() {
     String cmd_1 = "LK8EX1," + String(Media_P_1) + "," + String(altitudine_1) + "," + String(Vario_al_secondo_1).substring(0, 4) + "," + String(temp) + ",999";
     String checkSum2 = String(checkSum(cmd_1), HEX);
     Serial.println("$" + cmd_1 + "*" + checkSum2);              //Stringa alla seriale
-    SerialBT.println("$" + cmd_1 + "*" + checkSum2);
+    if (bluetooth == true) SerialBT.println("$" + cmd_1 + "*" + checkSum2);
     //somma = 0;
     count = -1;
 
@@ -362,14 +367,15 @@ void loop() {
   if (M5.BtnA.wasReleased()) {
 
   } else if (M5.BtnB.wasReleased()) {
-
+    
   } else if (M5.BtnC.wasReleased()) {
     altimetro = !altimetro;
   } else if (M5.BtnC.wasReleasefor(700)) {
-    if (altimetro == false){
-    EEPROM.put(3, int(altitudine));
-    q_2 = EEPROM.get(3, q_2);
-    EEPROM.commit();}
+    if (altimetro == false) {
+      EEPROM.put(3, int(altitudine));
+      q_2 = EEPROM.get(3, q_2);
+      EEPROM.commit();
+    }
   } else if (M5.BtnA.wasReleasefor(700)) {
     M5.Lcd.clear(BLACK);
     while (1) {
@@ -403,6 +409,12 @@ void loop() {
           M5.Lcd.print(soglia_neg);
           M5.Lcd.setCursor(250, 75);
           M5.Lcd.print("cm");
+          M5.Lcd.setCursor(0, 100);
+          M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(200, 100);
+          if (bluetooth == true) {
+            M5.Lcd.print("On");
+          } else M5.Lcd.print("Off");
           break;
         case 1:
           M5.Lcd.setCursor(0, 0);
@@ -429,6 +441,12 @@ void loop() {
           M5.Lcd.print(soglia_neg);
           M5.Lcd.setCursor(250, 75);
           M5.Lcd.print("cm");
+          M5.Lcd.setCursor(0, 100);
+          M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(200, 100);
+          if (bluetooth == true) {
+            M5.Lcd.print("On");
+          } else M5.Lcd.print("Off");
 
           if (M5.BtnB.wasReleased()) {
             suono = !suono;
@@ -465,6 +483,12 @@ void loop() {
           M5.Lcd.print(soglia_neg);
           M5.Lcd.setCursor(250, 75);
           M5.Lcd.print("cm");
+          M5.Lcd.setCursor(0, 100);
+          M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(200, 100);
+          if (bluetooth == true) {
+            M5.Lcd.print("On");
+          } else M5.Lcd.print("Off");
 
           if (M5.BtnB.wasReleased()) {
             M5.Lcd.fillScreen(TFT_BLACK);
@@ -502,6 +526,13 @@ void loop() {
           M5.Lcd.print(soglia_neg);
           M5.Lcd.setCursor(250, 75);
           M5.Lcd.print("cm");
+          M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+          M5.Lcd.setCursor(0, 100);
+          M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(200, 100);
+          if (bluetooth == true) {
+            M5.Lcd.print("On");
+          } else M5.Lcd.print("Off");
 
           if (M5.BtnB.wasReleased()) {
             M5.Lcd.fillScreen(TFT_BLACK);
@@ -514,6 +545,51 @@ void loop() {
             soglia_neg += 5;
             EEPROM.write(2, soglia_neg);
             EEPROM.commit();
+          }
+          break;
+        case 4:
+          M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+          M5.Lcd.setCursor(0, 0);
+          M5.Lcd.print("Impostazioni");
+          M5.Lcd.setCursor(0, 25);
+          M5.Lcd.print("Suono");
+          M5.Lcd.setCursor(200, 25);
+          if (suono == true) {
+            M5.Lcd.print("Si");
+          } else M5.Lcd.print("No");
+          M5.Lcd.setCursor(0, 50);
+          M5.Lcd.print("Vario +");
+          M5.Lcd.setCursor(200, 50);
+          M5.Lcd.print(soglia_pos);
+          M5.Lcd.setCursor(250, 50);
+          M5.Lcd.print("cm");
+          M5.Lcd.setCursor(0, 75);
+          M5.Lcd.print("Vario -");
+          M5.Lcd.setCursor(200, 75);
+          M5.Lcd.print(soglia_neg);
+          M5.Lcd.setCursor(250, 75);
+          M5.Lcd.print("cm");
+          M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
+          M5.Lcd.setCursor(0, 100);
+          M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(200, 100);
+          if (bluetooth == true) {
+            M5.Lcd.print("On ");
+          } else M5.Lcd.print("Off");
+          if (M5.BtnB.wasReleased()) {
+            
+            bluetooth = !bluetooth;
+            EEPROM.write(6, bluetooth);
+            EEPROM.commit();
+            
+
+          } else if (M5.BtnC.wasReleased()) {
+            
+            bluetooth = !bluetooth;
+            EEPROM.write(6, bluetooth);
+            EEPROM.commit();
+            
+
           }
           break;
         default:
@@ -533,7 +609,7 @@ void loop() {
       } else if (M5.BtnB.wasReleasefor(700)) {
 
       }
-      if (element > 3) element = 0;
+      if (element > 4) element = 0;
 
 
       //delay(100);
