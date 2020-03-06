@@ -281,8 +281,7 @@ void loop() {
 
   if (rmc_1.isUpdated() ||  gga_1.isUpdated())
   {
-    Serial.print("bluetooth ");
-    Serial.println(bluetooth);
+    
 
     String RMC = ("GNRMC," + String(rmc_1.value()) + "," + rmc_2.value() + "," + String(rmc_3.value()) + "," + rmc_4.value() + "," + String(rmc_5.value()) + "," + rmc_6.value() + "," + String(rmc_7.value()) + "," + String(rmc_8.value()) + "," + String(rmc_9.value()) + "," + String(rmc_10.value()) + "," + String(rmc_11.value()) + "," + rmc_12.value() + ",");
     String checkSum_2 = String(checkSum(RMC), HEX);
