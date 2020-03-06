@@ -580,14 +580,14 @@ void loop() {
             bluetooth = !bluetooth;
             EEPROM.write(6, bluetooth);
             EEPROM.commit();
-            
+            if (bluetooth == false) SerialBT.end();
 
           } else if (M5.BtnC.wasReleased()) {
             
             bluetooth = !bluetooth;
             EEPROM.write(6, bluetooth);
             EEPROM.commit();
-            
+            if (bluetooth == false) SerialBT.end();
 
           }
           break;
