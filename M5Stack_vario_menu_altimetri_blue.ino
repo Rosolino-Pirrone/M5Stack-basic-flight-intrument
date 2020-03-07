@@ -410,6 +410,8 @@ void loop() {
           M5.Lcd.print("cm");
           M5.Lcd.setCursor(0, 100);
           M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(0, 125);
+          M5.Lcd.print("GPS serial monitor");
           M5.Lcd.setCursor(125, 220);
           M5.Lcd.print("      ");
           M5.Lcd.setCursor(200, 100);
@@ -444,6 +446,8 @@ void loop() {
           M5.Lcd.print("cm");
           M5.Lcd.setCursor(0, 100);
           M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(0, 125);
+          M5.Lcd.print("GPS serial monitor");
           M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
           M5.Lcd.setCursor(125, 220);
           M5.Lcd.print("On/Off");
@@ -485,6 +489,8 @@ void loop() {
           M5.Lcd.print("cm");
           M5.Lcd.setCursor(0, 100);
           M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(0, 125);
+          M5.Lcd.print("GPS serial monitor");
           M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
           M5.Lcd.setCursor(120, 220);
           M5.Lcd.print("   -   ");
@@ -535,6 +541,8 @@ void loop() {
           M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
           M5.Lcd.setCursor(0, 100);
           M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(0, 125);
+          M5.Lcd.print("GPS serial monitor");
           M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
           M5.Lcd.setCursor(120, 220);
           M5.Lcd.print("   -   ");
@@ -584,6 +592,9 @@ void loop() {
           M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
           M5.Lcd.setCursor(0, 100);
           M5.Lcd.print("Bluetooth");
+          M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+          M5.Lcd.setCursor(0, 125);
+          M5.Lcd.print("GPS serial monitor");
           M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
           M5.Lcd.setCursor(125, 220);
           M5.Lcd.print("On/Off");
@@ -633,6 +644,69 @@ void loop() {
 
           }
           break;
+        case 5:
+          M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+          M5.Lcd.setCursor(0, 0);
+          M5.Lcd.print("Impostazioni");
+          M5.Lcd.setCursor(0, 25);
+          M5.Lcd.print("Sound");
+          M5.Lcd.setCursor(200, 25);
+          if (suono == true) {
+            M5.Lcd.print("On ");
+          } else M5.Lcd.print("Off");
+          M5.Lcd.setCursor(0, 50);
+          M5.Lcd.print("Vario +");
+          M5.Lcd.setCursor(200, 50);
+          M5.Lcd.print(soglia_pos);
+          M5.Lcd.setCursor(250, 50);
+          M5.Lcd.print("cm");
+          M5.Lcd.setCursor(0, 75);
+          M5.Lcd.print("Vario -");
+          M5.Lcd.setCursor(200, 75);
+          M5.Lcd.print(soglia_neg);
+          M5.Lcd.setCursor(250, 75);
+          M5.Lcd.print("cm");
+          M5.Lcd.setCursor(0, 100);
+          M5.Lcd.print("Bluetooth");
+          M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
+          M5.Lcd.setCursor(0, 125);
+          M5.Lcd.print("GPS serial monitor");
+          M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
+          M5.Lcd.setCursor(125, 220);
+          M5.Lcd.print("On/Off");
+          M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+          M5.Lcd.setCursor(200, 100);
+          if (bluetooth == true) {
+            M5.Lcd.print("On ");
+          } else M5.Lcd.print("Off");
+
+          if (M5.BtnB.wasReleased()) {
+            M5.Lcd.fillScreen(TFT_BLACK);
+            termInit();
+            M5.Lcd.setTextSize(1);
+            while (1) {
+              M5.update();
+              if (Serial.available()) {
+                int ch = Serial.read();
+                ss.write(ch);
+              }
+
+              if (ss.available()) {
+                int ch = ss.read();
+                Serial.write(ch);
+                termPutchar(ch);
+              }
+
+              if (M5.BtnB.wasReleased()) {
+                M5.Lcd.fillScreen(TFT_BLACK);
+                M5.Lcd.setTextSize(2);
+                M5.Lcd.begin();
+                break;
+              }
+            }
+          }
+
+          break;
         default:
           // if nothing else matches, do the default
           // default is optional
@@ -650,7 +724,7 @@ void loop() {
       } else if (M5.BtnB.wasReleasefor(700)) {
 
       }
-      if (element > 4) element = 0;
+      if (element > 5) element = 0;
 
 
       //delay(100);
