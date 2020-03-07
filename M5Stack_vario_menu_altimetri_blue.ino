@@ -451,6 +451,7 @@ void loop() {
           M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
           M5.Lcd.setCursor(125, 220);
           M5.Lcd.print("On/Off");
+          M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
           M5.Lcd.setCursor(200, 100);
           if (bluetooth == true) {
             M5.Lcd.print("On");
