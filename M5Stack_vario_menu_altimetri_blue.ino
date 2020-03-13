@@ -151,10 +151,7 @@ void setup() {
   // put your setup code here, to run once:
   M5.begin();
   delay(15);
-  if(!SD.begin()){
-        Serial.println("Card Mount Failed");
-        return;
-    }
+  M5.begin();
   delay(100);
   //M5.Power.begin();
   Serial.begin(115200);
