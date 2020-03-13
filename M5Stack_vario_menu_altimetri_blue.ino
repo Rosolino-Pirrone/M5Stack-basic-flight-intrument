@@ -59,6 +59,10 @@ unsigned long previousMillis_velocita = 0;
 
 String NMEA_RMC;
 String NMEA_GGA;
+bool FIX = false;
+
+int file_number = 0;
+bool other_number = false;
 
 bool suono = true;
 bool altimetro = true;
@@ -146,6 +150,7 @@ void IRAM_ATTR suonoVarioDiscendenza() {
 void setup() {
   // put your setup code here, to run once:
   M5.begin();
+  SD.begin();
   //M5.Power.begin();
   Serial.begin(115200);
   ss.begin(9600);
@@ -275,6 +280,36 @@ void setup() {
   //Serial.println(millis());
 
 }
+void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
+  Serial.printf("Listing directory: %s\n", dirname);
+
+  File root = fs.open(dirname);
+  if (!root) {
+    Serial.println("Failed to open directory");
+    return;
+  }
+  if (!root.isDirectory()) {
+    Serial.println("Not a directory");
+    return;
+  }
+
+  File file = root.openNextFile();
+  while (file) {
+    if (file.isDirectory()) {
+      Serial.print("  DIR : ");
+      Serial.println(file.name());
+      if (levels) {
+        listDir(fs, file.name(), levels - 1);
+      }
+    } else {
+      Serial.print("  FILE: ");
+      Serial.print(file.name());
+      Serial.print("  SIZE: ");
+      Serial.println(file.size());
+    }
+    file = root.openNextFile();
+  }
+}
 
 void loop() {
   M5.update();
@@ -288,14 +323,7 @@ void loop() {
     NMEA_RMC = ("$" + RMC + "*" + checkSum_2);
     Serial.println(NMEA_RMC);
     if (bluetooth == true) SerialBT.println(NMEA_RMC);
-    int q;
-    for (int i = 0; i < 2; i++)
-    {
-      q = NMEA_RMC.indexOf(",");
-      NMEA_RMC.remove(0, (q + 1)) ;
-    }
-    q = NMEA_RMC.indexOf(",");
-    NMEA_RMC.remove(q);
+
 
     String GGA = ("GNGGA," + String(gga_1.value()) + "," + String(gga_2.value()) + "," + gga_3.value() + "," + String(gga_4.value()) + "," + gga_5.value() + "," + String(gga_6.value()) + "," + String(gga_7.value()) + "," + String(gga_8.value()) + "," + String(gga_9.value()) + "," + String(gga_10.value()) + "," + String(gga_11.value()) + "," + String(gga_12.value()) + "," + String(gga_13.value()) + ",");
     String checkSum_ = String(checkSum(GGA), HEX);
@@ -303,7 +331,90 @@ void loop() {
     Serial.println(NMEA_GGA);
     if (bluetooth == true) SerialBT.println(NMEA_GGA);
 
+    String parse_nmea = NMEA_RMC;
+    int q;
+    for (int i = 0; i < 2; i++)
+    {
+      q = parse_nmea.indexOf(",");
+      parse_nmea.remove(0, (q + 1)) ;
+    }
+    q = parse_nmea.indexOf(",");
+    parse_nmea.remove(q);
+    if (parse_nmea == "A") FIX = true;
+    else FIX = false;
 
+    parse_nmea = NMEA_RMC;
+    for (int i = 0; i < 9; i++)
+    {
+      q = parse_nmea.indexOf(",");
+      parse_nmea.remove(0, (q + 1)) ;
+    }
+    q = parse_nmea.indexOf(",");
+    parse_nmea.remove(q);
+    String date_log = parse_nmea;
+    Serial.println("date_log");
+    Serial.println(date_log);
+
+    String date_nome_file;
+    File file;
+    File root = SD.open("/");
+    file = root.openNextFile();
+    date_nome_file = file.name();
+
+    while (file) {
+      date_nome_file = file.name();
+      file = root.openNextFile();
+
+    }
+
+    Serial.print("date_nome_file");
+    Serial.println(date_nome_file);
+    date_nome_file.remove(0,  1) ;
+    date_nome_file.remove(6);
+    Serial.println(date_nome_file);
+
+
+    //String logFile = "/" + String(gps.date.day()) + String(gps.date.month()) + String(gps.date.year());
+    if (!date_nome_file.equals(date_log)) {
+      file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
+      delay(5);
+      other_number = true;
+    } /*else   if (!SD.exists("/" + date_log + String(0) + ".gpx") && other_number == false) {
+      file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
+      Serial.println("FILE_APPEND");
+      file.print(NMEA_RMC + "\n");
+      file.print(NMEA_GGA + "\n");
+      file.close();
+      other_number = true;
+
+    }*/ else {
+      for (int i = 0; i < 30; i++) {
+        if (!SD.exists("/" + date_log + String(i) + ".gpx") && other_number == false) {
+          delay(5);
+          file_number = i;
+          Serial.println("file_number");
+          Serial.println(file_number);
+          other_number = true;
+        }
+
+      }
+
+    }
+    Serial.println("FILE_NUMBER");
+    Serial.println(file_number);
+    file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
+    String nome_file = file.name();
+    Serial.println("FILE_Name");
+    Serial.println(nome_file);
+    file.print(NMEA_RMC + "\n");
+    file.print(NMEA_GGA + "\n");
+    file.close();
+
+
+    listDir(SD, "/", 0);
+
+
+    Serial.println(millis());
   }
 
   Valori_Alt_Temp();       // richiamo la funzione Valori_Alt_Temp
@@ -332,7 +443,8 @@ void loop() {
     M5.Lcd.drawString("m/s", 260, 60, 2);
     M5.Lcd.drawString("m", 260, 180, 2);
     if (bluetooth == true) M5.Lcd.drawString("B", 260, 10, 2);
-    M5.Lcd.drawString(NMEA_RMC, 280, 10, 4);
+    if (FIX == true) M5.Lcd.drawString("A", 280, 10, 4);
+    else M5.Lcd.drawString("V", 280, 10, 4);
     M5.Lcd.drawString(String(Vario_al_secondo), 0, 0, 7);
     if (altimetro == true) {
       M5.Lcd.drawString(String(int(altitudine)), 0, 120, 7);
