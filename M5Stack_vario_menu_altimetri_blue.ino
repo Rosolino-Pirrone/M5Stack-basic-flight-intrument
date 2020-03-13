@@ -363,15 +363,15 @@ void loop() {
     String date_nome_file;
     File file;
     File root = SD.open("/");
-    delay(5);
+    //delay(5);
     file = root.openNextFile();
-    delay(5);
+    //delay(5);
     date_nome_file = file.name();
 
     while (file) {
       date_nome_file = file.name();
       file = root.openNextFile();
-      delay(5);
+      //delay(5);
     }
 
     Serial.print("date_nome_file");
@@ -384,7 +384,7 @@ void loop() {
     //String logFile = "/" + String(gps.date.day()) + String(gps.date.month()) + String(gps.date.year());
     if (!date_nome_file.equals(date_log)) {
       file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
-      delay(5);
+      //delay(5);
       other_number = true;
     } /*else   if (!SD.exists("/" + date_log + String(0) + ".gpx") && other_number == false) {
       file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
