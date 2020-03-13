@@ -358,7 +358,9 @@ void loop() {
     String date_nome_file;
     File file;
     File root = SD.open("/");
+    delay(5);
     file = root.openNextFile();
+    delay(5);
     date_nome_file = file.name();
 
     while (file) {
