@@ -150,7 +150,7 @@ void IRAM_ATTR suonoVarioDiscendenza() {
 void setup() {
   // put your setup code here, to run once:
   M5.begin();
-  delay(100);
+  delay(15);
   if(!SD.begin()){
         Serial.println("Card Mount Failed");
         return;
