@@ -366,7 +366,7 @@ void loop() {
     while (file) {
       date_nome_file = file.name();
       file = root.openNextFile();
-
+      delay(5);
     }
 
     Serial.print("date_nome_file");
