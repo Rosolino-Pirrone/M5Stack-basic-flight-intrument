@@ -153,7 +153,7 @@ void coreTask( void * pvParameters ) {
   delay(1000);
 
   while (true) {
-
+delay(3);
     if ((FIX == true) && (new_nmea == true)) {
       parse_nmea = NMEA_RMC;
       for (int i = 0; i < 9; i++)
@@ -198,7 +198,7 @@ void coreTask( void * pvParameters ) {
       }
 
       file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_APPEND);
-      //file.print(NMEA_RMC + "\n");
+      file.print(NMEA_RMC + "\n");
       file.print(NMEA_GGA + "\n");
       //file.flush();
       //file.close();
