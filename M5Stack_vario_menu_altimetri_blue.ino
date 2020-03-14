@@ -181,13 +181,13 @@ delay(1);
       int c = !date_nome_file.equals(date_log);
       
       if (!date_nome_file.equals(date_log)) {
-        file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_APPEND);
+        file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_WRITE);
         delay(5);
         other_number = true;
       } else {
         for (int i = 0; i < 30; i++) {
           if (!SD.exists("/" + date_log + String(i) + ".nmea") && other_number == false) {
-            file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_APPEND);
+            file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_WRITE);
             delay(5);
             file_number = i;
             other_number = true;
@@ -449,13 +449,13 @@ void loop() {
       date_nome_file.remove(6);
 
       if (!date_nome_file.equals(date_log)) {
-        file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
+        file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_WRITE);
         delay(5);
         other_number = true;
       } else {
         for (int i = 0; i < 30; i++) {
           if (!SD.exists("/" + date_log + String(i) + ".gpx") && other_number == false) {
-            file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
+            file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_WRITE);
             delay(5);
             file_number = i;
             other_number = true;
