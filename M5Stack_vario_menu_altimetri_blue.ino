@@ -203,7 +203,7 @@ delay(3);
       //file.flush();
       //file.close();
 
-      listDir(SD, "/", 0);
+      //listDir(SD, "/", 0);
 
       //Serial.println(millis());
     }
