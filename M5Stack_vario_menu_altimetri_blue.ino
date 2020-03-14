@@ -198,8 +198,8 @@ void coreTask( void * pvParameters ) {
       }
 
       file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
-      file.print(NMEA_RMC + "\n");
-      //file.print(NMEA_GGA + "\n");
+      //file.print(NMEA_RMC + "\n");
+      file.print(NMEA_GGA + "\n");
       //file.flush();
       //file.close();
 
