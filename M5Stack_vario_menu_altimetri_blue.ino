@@ -153,7 +153,7 @@ void coreTask( void * pvParameters ) {
   delay(1000);
 
   while (true) {
-delay(1);
+delay(2);
     if ((FIX == true) && (new_nmea == true)) {
       parse_nmea = NMEA_RMC;
       for (int i = 0; i < 9; i++)
