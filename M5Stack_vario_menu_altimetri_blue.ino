@@ -217,7 +217,7 @@ void setup() {
   delay(15);
   SD.begin();
   delay(100);
-  //M5.Power.begin();
+  M5.Power.begin();
   Serial.begin(115200);
   ss.begin(9600);
   EEPROM.begin(EEPROM_SIZE);
