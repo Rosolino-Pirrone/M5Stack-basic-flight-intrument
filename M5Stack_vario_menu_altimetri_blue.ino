@@ -539,9 +539,11 @@ void loop() {
   ///////////////////////////////////////////////////////// Menu //////////////////////////////////////////////
 
   if (M5.BtnA.wasReleased()) {
-    listDir(SD, "/", 0);
+    //listDir(SD, "/", 0);
   } else if (M5.BtnB.wasReleased()) {
 
+  } else if (M5.BtnB.wasReleasefor(700)) {
+    M5.Power.powerOFF();
   } else if (M5.BtnC.wasReleased()) {
     altimetro = !altimetro;
   } else if (M5.BtnC.wasReleasefor(700)) {
