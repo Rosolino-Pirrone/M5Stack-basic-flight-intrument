@@ -12,8 +12,7 @@
 #endif
 
 BluetoothSerial SerialBT;
-const char *ssid = "Arduvario";
-const char *password = "PasswordArduvario";
+
 
 
 #define MS5611_ADDRESS (0x77)
