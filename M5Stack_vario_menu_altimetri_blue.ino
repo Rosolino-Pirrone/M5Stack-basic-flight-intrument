@@ -542,7 +542,7 @@ void loop() {
   } else if (M5.BtnB.wasReleased()) {
 
   } else if (M5.BtnB.wasReleasefor(700)) {
-    M5.Power.powerOFF();
+    //M5.Power.powerOFF();
   } else if (M5.BtnC.wasReleased()) {
     altimetro = !altimetro;
   } else if (M5.BtnC.wasReleasefor(700)) {
