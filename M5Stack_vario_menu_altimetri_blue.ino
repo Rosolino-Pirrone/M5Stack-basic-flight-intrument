@@ -220,7 +220,7 @@ void setup() {
     M5.Lcd.printf("No SD");
     M5.Speaker.beep();
   }
-  M5.Power.setWakeupButton(2);
+  //M5.Power.setWakeupButton(2);
   delay(100);
   //M5.Power.begin();
   Serial.begin(115200);
@@ -555,11 +555,11 @@ void loop() {
   if (M5.BtnA.wasReleased()) {
     //M5.Lcd.wakeup();//listDir(SD, "/", 0);
   } else if (M5.BtnB.wasReleased()) {
-    M5.Speaker.beep();
-    Serial.print("Battery ");
-    Serial.println(M5.Power.getBatteryLevel());
+    //M5.Speaker.beep();
+    //Serial.print("Battery ");
+    //Serial.println(M5.Power.getBatteryLevel());
   } else if (M5.BtnB.wasReleasefor(700)) {
-    M5.powerOFF();//M5.Power.powerOFF();
+    //M5.powerOFF();//M5.Power.powerOFF();
   } else if (M5.BtnC.wasReleased()) {
     altimetro = !altimetro;
   } else if (M5.BtnC.wasReleasefor(700)) {
