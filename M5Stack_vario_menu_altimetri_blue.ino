@@ -220,7 +220,7 @@ void setup() {
     M5.Lcd.printf("No SD");
     M5.Speaker.beep();
   }
-  //M5.Power.setWakeupButton(2);
+  M5.Power.setWakeupButton(2);
   delay(100);
   //M5.Power.begin();
   Serial.begin(115200);
@@ -517,17 +517,17 @@ void loop() {
     M5.Lcd.drawString("s", 305, 60, 2);
     M5.Lcd.drawString("m", 280, 180, 2);
     M5.Lcd.drawString("Batt.", 200, 210, 2);
-    M5.Lcd.drawString(String(M5.Power.getBatteryLevel()), 260, 210, 2);
-    if (bluetooth == true) M5.Lcd.drawString("B", 260, 10, 2);
+    M5.Lcd.drawString(String(M5.Power.getBatteryLevel()), 270, 210, 2);
+    if (bluetooth == true) M5.Lcd.drawString("B", 280, 120, 2);
     if (FIX == true) M5.Lcd.drawString("A", 280, 10, 4);
     else M5.Lcd.drawString("V", 280, 10, 4);
     M5.Lcd.drawString(String(Vario_al_secondo), 0, 0, 7);
     if (altimetro == true) {
       M5.Lcd.drawString(String(int(altitudine)), 0, 120, 7);
-      M5.Lcd.drawString("A 1", 260, 120, 2);
+      M5.Lcd.drawString("A1", 280, 150, 2);
     } else {
       M5.Lcd.drawString(String((int(altitudine) - q_2)), 0, 120, 7);
-      M5.Lcd.drawString("A 2", 260, 120, 2);
+      M5.Lcd.drawString("A2", 280, 150, 2);
     }
 
     String cmd = "POV,E," + String(Vario_al_secondo).substring(0, 4) + ",P," + String(Media_P) + ",T," + String(Valori[0] / 100); // calcolo stringa NMEA OpenVario
@@ -556,10 +556,10 @@ void loop() {
     //M5.Lcd.wakeup();//listDir(SD, "/", 0);
   } else if (M5.BtnB.wasReleased()) {
     //M5.Speaker.beep();
-    //Serial.print("Battery ");
-    //Serial.println(M5.Power.getBatteryLevel());
+    Serial.print("Battery ");
+    Serial.println(M5.Power.getBatteryLevel());
   } else if (M5.BtnB.wasReleasefor(700)) {
-    //M5.powerOFF();//M5.Power.powerOFF();
+    M5.powerOFF();                                         // Spegne M5Stack sotto carica USB
   } else if (M5.BtnC.wasReleased()) {
     altimetro = !altimetro;
   } else if (M5.BtnC.wasReleasefor(700)) {
