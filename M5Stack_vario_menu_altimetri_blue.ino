@@ -152,8 +152,9 @@ void coreTask( void * pvParameters ) {
   delay(1000);
 
   while (true) {
-delay(2);
+    delay(2);
     if ((FIX == true) && (new_nmea == true)) {
+      //Serial.println(millis());
       parse_nmea = NMEA_RMC;
       for (int i = 0; i < 9; i++)
       {
@@ -178,7 +179,7 @@ delay(2);
       date_nome_file.remove(0,  1) ;
       date_nome_file.remove(6);
       int c = !date_nome_file.equals(date_log);
-      
+
       if (!date_nome_file.equals(date_log)) {
         file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_WRITE);
         delay(5);
@@ -200,7 +201,7 @@ delay(2);
       file.print(NMEA_RMC + "\n");
       file.print(NMEA_GGA + "\n");
       //file.flush();
-      //file.close();
+      file.close();
 
       //listDir(SD, "/", 0);
 
@@ -214,9 +215,14 @@ void setup() {
   // put your setup code here, to run once:
   M5.begin();
   delay(15);
-  SD.begin();
+  if (!SD.begin()) {
+    M5.Lcd.setCursor(0, 25);
+    M5.Lcd.printf("No SD");
+    M5.Speaker.beep();
+  }
+  M5.Power.setWakeupButton(2);
   delay(100);
-  M5.Power.begin();
+  //M5.Power.begin();
   Serial.begin(115200);
   ss.begin(9600);
   EEPROM.begin(EEPROM_SIZE);
@@ -241,7 +247,7 @@ void setup() {
   delay(2000);
   timer = timerBegin(0, 80, true);                  //timer 0, div 80
 
-  delay(5000);                                 // attendo 5s
+  //delay(5000);                                 // attendo 5s
   Wire.begin();                                // inizializzo la i2c senza nessun indirizzo, imposto Arduino come master
   Wire.beginTransmission(MS5611_ADDRESS);      // comunico tramite i2c all'indirizzo del sensore
   Wire.write(CMD_RESET);                       // impartisco uno reset
@@ -354,6 +360,8 @@ void setup() {
     taskCore);  /* Core where the task should run */
 
   Serial.println("Task created...");
+  /*M5.Lcd.setBrightness(0);
+    M5.Lcd.sleep();*/
 }
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
   Serial.printf("Listing directory: %s\n", dirname);
@@ -421,7 +429,8 @@ void loop() {
     parse_nmea.remove(q);
     if (parse_nmea == "A") FIX = true;
     else FIX = false;
-
+    //FIX = true;
+    //Serial.println(millis());
     /*if (FIX == true) {
       parse_nmea = NMEA_RMC;
       for (int i = 0; i < 9; i++)
@@ -448,13 +457,13 @@ void loop() {
       date_nome_file.remove(6);
 
       if (!date_nome_file.equals(date_log)) {
-        file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_WRITE);
+        file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
         delay(5);
         other_number = true;
       } else {
         for (int i = 0; i < 30; i++) {
           if (!SD.exists("/" + date_log + String(i) + ".gpx") && other_number == false) {
-            file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_WRITE);
+            file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
             delay(5);
             file_number = i;
             other_number = true;
@@ -492,6 +501,7 @@ void loop() {
   if (count > 28) {
     loopTime = millis(); // reset the timer
     unsigned long Tempo = loopTime - previousMillis_velocita;
+    //Serial.println(Tempo);
     previousMillis_velocita = loopTime;
     altitudine = 44330.0 * (1.0 - pow(Media_P / 1013.25, 0.1903));
     //Serial.print(F("Altitudine = "));
@@ -502,8 +512,12 @@ void loop() {
     Vario_al_secondo = Vario / Tempo * 1000;
     M5.Lcd.fillScreen(TFT_BLACK);
     M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
-    M5.Lcd.drawString("m/s", 260, 60, 2);
-    M5.Lcd.drawString("m", 260, 180, 2);
+    M5.Lcd.drawString("m", 280, 50, 2);
+    M5.Lcd.drawString("/", 295, 57, 2);
+    M5.Lcd.drawString("s", 305, 60, 2);
+    M5.Lcd.drawString("m", 280, 180, 2);
+    M5.Lcd.drawString("Batt.", 200, 210, 2);
+    M5.Lcd.drawString(String(M5.Power.getBatteryLevel()), 260, 210, 2);
     if (bluetooth == true) M5.Lcd.drawString("B", 260, 10, 2);
     if (FIX == true) M5.Lcd.drawString("A", 280, 10, 4);
     else M5.Lcd.drawString("V", 280, 10, 4);
@@ -515,6 +529,7 @@ void loop() {
       M5.Lcd.drawString(String((int(altitudine) - q_2)), 0, 120, 7);
       M5.Lcd.drawString("A 2", 260, 120, 2);
     }
+
     String cmd = "POV,E," + String(Vario_al_secondo).substring(0, 4) + ",P," + String(Media_P) + ",T," + String(Valori[0] / 100); // calcolo stringa NMEA OpenVario
     String checkSum0 = String(checkSum(cmd), HEX);
     Serial.println("$" + cmd + "*" + checkSum0);              //Stringa alla seriale
@@ -538,11 +553,13 @@ void loop() {
   ///////////////////////////////////////////////////////// Menu //////////////////////////////////////////////
 
   if (M5.BtnA.wasReleased()) {
-    //listDir(SD, "/", 0);
+    //M5.Lcd.wakeup();//listDir(SD, "/", 0);
   } else if (M5.BtnB.wasReleased()) {
-
+    M5.Speaker.beep();
+    Serial.print("Battery ");
+    Serial.println(M5.Power.getBatteryLevel());
   } else if (M5.BtnB.wasReleasefor(700)) {
-    //M5.Power.powerOFF();
+    M5.powerOFF();//M5.Power.powerOFF();
   } else if (M5.BtnC.wasReleased()) {
     altimetro = !altimetro;
   } else if (M5.BtnC.wasReleasefor(700)) {
