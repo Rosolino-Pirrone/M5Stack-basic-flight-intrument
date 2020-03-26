@@ -45,7 +45,7 @@ int64_t SENS, SENS_2;
 
 float P;
 float Valori[2];
-float valori_alt[50];
+float valori_alt[150];
 float Media_P;
 int count = 0;
 
@@ -75,6 +75,7 @@ int element = 0;
 int q_2 = 0;
 int soglia_pos = 0;
 int soglia_neg = 0;
+int media = 0;
 #define EEPROM_SIZE 512
 
 
@@ -220,15 +221,17 @@ void setup() {
     M5.Lcd.printf("No SD");
     M5.Speaker.beep();
   }
+  M5.Power.begin();
   M5.Power.setWakeupButton(2);
+  //M5.Power.setPowerBoostKeepOn(1);
   delay(100);
-  //M5.Power.begin();
   Serial.begin(115200);
   ss.begin(9600);
   EEPROM.begin(EEPROM_SIZE);
   suono = EEPROM.read(0);
   soglia_pos = EEPROM.read(1);
   soglia_neg = EEPROM.read(2);
+  media = EEPROM.read(3);
   q_2 = EEPROM.get(3, q_2);
   bluetooth = EEPROM.read(6);
   if (bluetooth == true) SerialBT.begin("Arduvario"); //Bluetooth device name
@@ -490,18 +493,21 @@ void loop() {
   //Serial.println(millis());
   Valori_Alt_Temp();       // richiamo la funzione Valori_Alt_Temp
 
-  valori_alt[28] = Valori[1];
-  for (int i = 0; i < 28; i++) {
+  valori_alt[media] = Valori[1];
+  for (int i = 0; i < media; i++) {
     valori_alt[i] = valori_alt[i + 1];      // memorizzo i valori nell'array valori_alt
     somma = somma + valori_alt[i];
   }
 
-  float Media_P = somma / 28;
+  float Media_P = somma / media;
 
-  if (count > 28) {
+  //if (count > 40) {
+  if (millis() - loopTime > 1000) { 
+    Serial.print("media");
+    Serial.println(media);
     loopTime = millis(); // reset the timer
     unsigned long Tempo = loopTime - previousMillis_velocita;
-    //Serial.println(Tempo);
+    Serial.println(Tempo);
     previousMillis_velocita = loopTime;
     altitudine = 44330.0 * (1.0 - pow(Media_P / 1013.25, 0.1903));
     //Serial.print(F("Altitudine = "));
@@ -602,12 +608,16 @@ void loop() {
           M5.Lcd.setCursor(250, 75);
           M5.Lcd.print("cm");
           M5.Lcd.setCursor(0, 100);
-          M5.Lcd.print("Bluetooth");
+          M5.Lcd.print("Media");
+          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.print(media);
           M5.Lcd.setCursor(0, 125);
+          M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(0, 150);
           M5.Lcd.print("GPS serial monitor");
           M5.Lcd.setCursor(125, 220);
           M5.Lcd.print("      ");
-          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.setCursor(200, 125);
           if (bluetooth == true) {
             M5.Lcd.print("On ");
           } else M5.Lcd.print("Off");
@@ -636,16 +646,19 @@ void loop() {
           M5.Lcd.setCursor(200, 75);
           M5.Lcd.print(soglia_neg);
           M5.Lcd.setCursor(250, 75);
-          M5.Lcd.print("cm");
-          M5.Lcd.setCursor(0, 100);
-          M5.Lcd.print("Bluetooth");
+          M5.Lcd.print("cm");M5.Lcd.setCursor(0, 100);
+          M5.Lcd.print("Media");
+          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.print(media);
           M5.Lcd.setCursor(0, 125);
+          M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(0, 150);
           M5.Lcd.print("GPS serial monitor");
           M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
           M5.Lcd.setCursor(125, 220);
           M5.Lcd.print("On/Off");
           M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
-          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.setCursor(200, 125);
           if (bluetooth == true) {
             M5.Lcd.print("On");
           } else M5.Lcd.print("Off");
@@ -682,8 +695,12 @@ void loop() {
           M5.Lcd.setCursor(250, 75);
           M5.Lcd.print("cm");
           M5.Lcd.setCursor(0, 100);
-          M5.Lcd.print("Bluetooth");
+          M5.Lcd.print("Media");
+          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.print(media);
           M5.Lcd.setCursor(0, 125);
+          M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(0, 150);
           M5.Lcd.print("GPS serial monitor");
           M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
           M5.Lcd.setCursor(120, 220);
@@ -691,7 +708,7 @@ void loop() {
           M5.Lcd.setCursor(250, 220);
           M5.Lcd.print("+");
           M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
-          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.setCursor(200, 125);
           if (bluetooth == true) {
             M5.Lcd.print("On");
           } else M5.Lcd.print("Off");
@@ -734,8 +751,13 @@ void loop() {
           M5.Lcd.print("cm");
           M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
           M5.Lcd.setCursor(0, 100);
-          M5.Lcd.print("Bluetooth");
+          M5.Lcd.print("Media");
+          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.print(media);
+          M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
           M5.Lcd.setCursor(0, 125);
+          M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(0, 150);
           M5.Lcd.print("GPS serial monitor");
           M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
           M5.Lcd.setCursor(120, 220);
@@ -743,7 +765,7 @@ void loop() {
           M5.Lcd.setCursor(250, 220);
           M5.Lcd.print("+");
           M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
-          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.setCursor(200, 125);
           if (bluetooth == true) {
             M5.Lcd.print("On");
           } else M5.Lcd.print("Off");
@@ -761,7 +783,65 @@ void loop() {
             EEPROM.commit();
           }
           break;
-        case 4:
+          case 4:
+          M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+          M5.Lcd.setCursor(0, 0);
+          M5.Lcd.print("Impostazioni");
+          M5.Lcd.setCursor(0, 25);
+          M5.Lcd.print("Sound");
+          M5.Lcd.setCursor(200, 25);
+          if (suono == true) {
+            M5.Lcd.print("On ");
+          } else M5.Lcd.print("Off");
+          
+          M5.Lcd.setCursor(0, 50);
+          M5.Lcd.print("Vario +");
+          M5.Lcd.setCursor(200, 50);
+          M5.Lcd.print(soglia_pos);
+          M5.Lcd.setCursor(250, 50);
+          M5.Lcd.print("cm");
+          M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+          M5.Lcd.setCursor(0, 75);
+          M5.Lcd.print("Vario -");
+          M5.Lcd.setCursor(200, 75);
+          M5.Lcd.print(soglia_neg);
+          M5.Lcd.setCursor(250, 75);
+          M5.Lcd.print("cm");
+          M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
+          M5.Lcd.setCursor(0, 100);
+          M5.Lcd.print("Media");
+          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.print(media);
+          M5.Lcd.setCursor(0, 125);
+          M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+          M5.Lcd.print("Bluetooth");
+          M5.Lcd.setCursor(0, 150);
+          M5.Lcd.print("GPS serial monitor");
+          M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
+          M5.Lcd.setCursor(120, 220);
+          M5.Lcd.print("   -   ");
+          M5.Lcd.setCursor(250, 220);
+          M5.Lcd.print("+");
+          M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+          M5.Lcd.setCursor(200, 125);
+          if (bluetooth == true) {
+            M5.Lcd.print("On");
+          } else M5.Lcd.print("Off");
+
+          if (M5.BtnB.wasReleased()) {
+            M5.Lcd.fillScreen(TFT_BLACK);
+            media -= 1;
+            if (soglia_pos < 0) soglia_pos = 0;
+            EEPROM.write(3, media);
+            EEPROM.commit();
+          } else if (M5.BtnC.wasReleased()) {
+            M5.Lcd.fillScreen(TFT_BLACK);
+            media += 1;
+            EEPROM.write(3, media);
+            EEPROM.commit();
+          }
+          break;
+        case 5:
           M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
           M5.Lcd.setCursor(0, 0);
           M5.Lcd.print("Impostazioni");
@@ -782,12 +862,15 @@ void loop() {
           M5.Lcd.setCursor(200, 75);
           M5.Lcd.print(soglia_neg);
           M5.Lcd.setCursor(250, 75);
-          M5.Lcd.print("cm");
+          M5.Lcd.print("cm");M5.Lcd.setCursor(0, 100);
+          M5.Lcd.print("Media");
+          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.print(media);
           M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
-          M5.Lcd.setCursor(0, 100);
+          M5.Lcd.setCursor(0, 125);
           M5.Lcd.print("Bluetooth");
           M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
-          M5.Lcd.setCursor(0, 125);
+          M5.Lcd.setCursor(0, 150);
           M5.Lcd.print("GPS serial monitor");
           M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
           M5.Lcd.setCursor(125, 220);
@@ -795,7 +878,7 @@ void loop() {
           M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
           M5.Lcd.setCursor(250, 220);
           M5.Lcd.print(" ");
-          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.setCursor(200, 125);
           if (bluetooth == true) {
             M5.Lcd.print("On ");
           } else M5.Lcd.print("Off");
@@ -806,7 +889,7 @@ void loop() {
               while (1) {
                 M5.update();
                 M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
-                M5.Lcd.setCursor(200, 100);
+                M5.Lcd.setCursor(200, 125);
                 M5.Lcd.print("On ");
                 M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
                 M5.Lcd.setCursor(0, 180);
@@ -838,7 +921,7 @@ void loop() {
 
           }
           break;
-        case 5:
+        case 6:
           M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
           M5.Lcd.setCursor(0, 0);
           M5.Lcd.print("Impostazioni");
@@ -861,15 +944,19 @@ void loop() {
           M5.Lcd.setCursor(250, 75);
           M5.Lcd.print("cm");
           M5.Lcd.setCursor(0, 100);
+          M5.Lcd.print("Media");
+          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.print(media);
+          M5.Lcd.setCursor(0, 125);
           M5.Lcd.print("Bluetooth");
           M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
-          M5.Lcd.setCursor(0, 125);
+          M5.Lcd.setCursor(0, 150);
           M5.Lcd.print("GPS serial monitor");
           M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
           M5.Lcd.setCursor(125, 220);
           M5.Lcd.print("On/Off");
           M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
-          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.setCursor(200, 125);
           if (bluetooth == true) {
             M5.Lcd.print("On ");
           } else M5.Lcd.print("Off");
@@ -918,7 +1005,7 @@ void loop() {
       } else if (M5.BtnB.wasReleasefor(700)) {
 
       }
-      if (element > 5) element = 0;
+      if (element > 6) element = 0;
 
 
       //delay(100);
