@@ -480,8 +480,16 @@ void loop() {
     NMEA_RMC = ("$" + RMC + "*" + checkSum_2);
     Serial.println(NMEA_RMC);
     //if (bluetooth == true) SerialBT.println(NMEA_RMC);
+    int n = NMEA_RMC.length();
+    char NMEA_RMCc[n + 1];
+    strcpy(NMEA_RMCc, NMEA_RMC.c_str());
+    //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
+    n = NMEA_GGA.length();
+    char NMEA_GGAc[n + 1];
+    strcpy(NMEA_GGAc, NMEA_GGA.c_str());
+    //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
     if (deviceConnected) {
-      pTxCharacteristic->setValue("$LK8EX1,99860,99999,9999,25,1000,*12");
+      pTxCharacteristic->setValue(NMEA_GGAc);
       pTxCharacteristic->notify();
       txValue++;
       //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
@@ -641,8 +649,8 @@ void loop() {
   String checkSum2 = String(checkSum(cmd_1), HEX);
   Serial.println("$" + cmd_1 + "*" + checkSum2);              //Stringa alla seriale
   String LK8EX1 = ("$" + cmd_1 + "*" + checkSum2 + "\n");
-  int m = LK8EX1.length();
-  char LK8EX1c[m + 1];
+  n = LK8EX1.length();
+  char LK8EX1c[n + 1];
   strcpy(LK8EX1c, LK8EX1.c_str());
   //Serial.println("$LK8EX1,99860,99999,9999,25,1000,*12");
   //if (bluetooth == true) SerialBT.println("$" + cmd_1 + "*" + checkSum2);
