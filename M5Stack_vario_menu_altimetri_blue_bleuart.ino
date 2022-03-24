@@ -22,7 +22,7 @@
 #include <BLE2902.h>
 
 BLEServer *pServer = NULL;
-BLECharacteristic * pTxCharacteristic;
+BLECharacteristic *pTxCharacteristic;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
@@ -260,7 +260,7 @@ void setup() {
   //M5.Power.setPowerBoostKeepOn(1);
   delay(100);
   Serial.begin(115200);
-  
+
   // Create the BLE Device
   BLEDevice::init("Arduvario");
 
@@ -471,109 +471,109 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
 void loop() {
   M5.update();
 
-  if (rmc_1.isUpdated() ||  gga_1.isUpdated())
+  //if (rmc_1.isUpdated() ||  gga_1.isUpdated())
+  //{
+
+
+  String RMC = ("GNRMC," + String(rmc_1.value()) + "," + rmc_2.value() + "," + String(rmc_3.value()) + "," + rmc_4.value() + "," + String(rmc_5.value()) + "," + rmc_6.value() + "," + String(rmc_7.value()) + "," + String(rmc_8.value()) + "," + String(rmc_9.value()) + "," + String(rmc_10.value()) + "," + String(rmc_11.value()) + "," + rmc_12.value() + ",");
+  String checkSum_2 = String(checkSum(RMC), HEX);
+  NMEA_RMC = ("$" + RMC + "*" + checkSum_2 + "\n");
+  Serial.println(NMEA_RMC);
+  //if (bluetooth == true) SerialBT.println(NMEA_RMC);
+  int n = NMEA_RMC.length();
+  char NMEA_RMCc[n + 1];
+  strcpy(NMEA_RMCc, NMEA_RMC.c_str());
+  //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
+  if (deviceConnected) {
+    pTxCharacteristic->setValue(NMEA_RMCc);
+    pTxCharacteristic->notify();
+
+    //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
+  }
+
+
+  String GGA = ("GNGGA," + String(gga_1.value()) + "," + String(gga_2.value()) + "," + gga_3.value() + "," + String(gga_4.value()) + "," + gga_5.value() + "," + String(gga_6.value()) + "," + String(gga_7.value()) + "," + String(gga_8.value()) + "," + String(gga_9.value()) + "," + String(gga_10.value()) + "," + String(gga_11.value()) + "," + String(gga_12.value()) + "," + String(gga_13.value()) + ",");
+  String checkSum_ = String(checkSum(GGA), HEX);
+  NMEA_GGA = ("$" + GGA + "*" + checkSum_ + "\n");
+  Serial.println(NMEA_GGA);
+  //if (bluetooth == true) SerialBT.println(NMEA_GGA);
+  n = NMEA_GGA.length();
+  char NMEA_GGAc[n + 1];
+  strcpy(NMEA_GGAc, NMEA_GGA.c_str());
+  //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
+  if (deviceConnected) {
+    pTxCharacteristic->setValue(NMEA_GGAc);
+    pTxCharacteristic->notify();
+
+    //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
+  }
+  new_nmea = true;
+  parse_nmea = NMEA_RMC;
+
+  for (int i = 0; i < 2; i++)
   {
-
-
-    String RMC = ("GNRMC," + String(rmc_1.value()) + "," + rmc_2.value() + "," + String(rmc_3.value()) + "," + rmc_4.value() + "," + String(rmc_5.value()) + "," + rmc_6.value() + "," + String(rmc_7.value()) + "," + String(rmc_8.value()) + "," + String(rmc_9.value()) + "," + String(rmc_10.value()) + "," + String(rmc_11.value()) + "," + rmc_12.value() + ",");
-    String checkSum_2 = String(checkSum(RMC), HEX);
-    NMEA_RMC = ("$" + RMC + "*" + checkSum_2);
-    Serial.println(NMEA_RMC);
-    //if (bluetooth == true) SerialBT.println(NMEA_RMC);
-    int n = NMEA_RMC.length();
-    char NMEA_RMCc[n + 1];
-    strcpy(NMEA_RMCc, NMEA_RMC.c_str());
-    //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
-    n = NMEA_GGA.length();
-    char NMEA_GGAc[n + 1];
-    strcpy(NMEA_GGAc, NMEA_GGA.c_str());
-    //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
-    if (deviceConnected) {
-      pTxCharacteristic->setValue(NMEA_GGAc);
-      pTxCharacteristic->notify();
-      txValue++;
-      //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
-    }
-
-
-    String GGA = ("GNGGA," + String(gga_1.value()) + "," + String(gga_2.value()) + "," + gga_3.value() + "," + String(gga_4.value()) + "," + gga_5.value() + "," + String(gga_6.value()) + "," + String(gga_7.value()) + "," + String(gga_8.value()) + "," + String(gga_9.value()) + "," + String(gga_10.value()) + "," + String(gga_11.value()) + "," + String(gga_12.value()) + "," + String(gga_13.value()) + ",");
-    String checkSum_ = String(checkSum(GGA), HEX);
-    NMEA_GGA = ("$" + GGA + "*" + checkSum_);
-    Serial.println(NMEA_GGA);
-    //if (bluetooth == true) SerialBT.println(NMEA_GGA);
-    if (deviceConnected) {
-      pTxCharacteristic->setValue("$LK8EX1,99860,99999,9999,25,1000,*12");
-      pTxCharacteristic->notify();
-      txValue++;
-      //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
-    }
-    new_nmea = true;
+    q = parse_nmea.indexOf(",");
+    parse_nmea.remove(0, (q + 1)) ;
+  }
+  q = parse_nmea.indexOf(",");
+  parse_nmea.remove(q);
+  if (parse_nmea == "A") FIX = true;
+  else FIX = false;
+  //FIX = true;
+  //Serial.println(millis());
+  /*if (FIX == true) {
     parse_nmea = NMEA_RMC;
-
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 9; i++)
     {
       q = parse_nmea.indexOf(",");
       parse_nmea.remove(0, (q + 1)) ;
     }
     q = parse_nmea.indexOf(",");
     parse_nmea.remove(q);
-    if (parse_nmea == "A") FIX = true;
-    else FIX = false;
-    //FIX = true;
-    //Serial.println(millis());
-    /*if (FIX == true) {
-      parse_nmea = NMEA_RMC;
-      for (int i = 0; i < 9; i++)
-      {
-        q = parse_nmea.indexOf(",");
-        parse_nmea.remove(0, (q + 1)) ;
-      }
-      q = parse_nmea.indexOf(",");
-      parse_nmea.remove(q);
-      String date_log = parse_nmea;
-      String date_nome_file;
+    String date_log = parse_nmea;
+    String date_nome_file;
 
-      File root = SD.open("/");
-      file = root.openNextFile();
+    File root = SD.open("/");
+    file = root.openNextFile();
+    date_nome_file = file.name();
+
+    while (file) {
       date_nome_file = file.name();
+      file = root.openNextFile();
 
-      while (file) {
-        date_nome_file = file.name();
-        file = root.openNextFile();
+    }
 
-      }
+    date_nome_file.remove(0,  1) ;
+    date_nome_file.remove(6);
 
-      date_nome_file.remove(0,  1) ;
-      date_nome_file.remove(6);
-
-      if (!date_nome_file.equals(date_log)) {
-        file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
-        delay(5);
-        other_number = true;
-      } else {
-        for (int i = 0; i < 30; i++) {
-          if (!SD.exists("/" + date_log + String(i) + ".gpx") && other_number == false) {
-            file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
-            delay(5);
-            file_number = i;
-            other_number = true;
-          }
-
+    if (!date_nome_file.equals(date_log)) {
+      file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
+      delay(5);
+      other_number = true;
+    } else {
+      for (int i = 0; i < 30; i++) {
+        if (!SD.exists("/" + date_log + String(i) + ".gpx") && other_number == false) {
+          file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
+          delay(5);
+          file_number = i;
+          other_number = true;
         }
 
       }
 
-      file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
-      file.print(NMEA_RMC + "\n");
-      file.print(NMEA_GGA + "\n");
-      //file.flush();
-      //file.close();
+    }
 
-      listDir(SD, "/", 0);
+    file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
+    file.print(NMEA_RMC + "\n");
+    file.print(NMEA_GGA + "\n");
+    //file.flush();
+    //file.close();
 
-      Serial.println(millis());
-      }*/
-  }
+    listDir(SD, "/", 0);
+
+    Serial.println(millis());
+    }*/
+  //}
 
 
 
@@ -630,14 +630,14 @@ void loop() {
   String checkSum0 = String(checkSum(cmd), HEX);
   Serial.println("$" + cmd + "*" + checkSum0);              //Stringa alla seriale
   String POV = ("$" + cmd + "*" + checkSum0 + "\n");
-  int n = POV.length();
+  n = POV.length();
   char povc[n + 1];
   strcpy(povc, POV.c_str());
   //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
   if (deviceConnected) {
     pTxCharacteristic->setValue(povc);
     pTxCharacteristic->notify();
-    txValue++;
+
     //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
   }
 
@@ -649,15 +649,24 @@ void loop() {
   String checkSum2 = String(checkSum(cmd_1), HEX);
   Serial.println("$" + cmd_1 + "*" + checkSum2);              //Stringa alla seriale
   String LK8EX1 = ("$" + cmd_1 + "*" + checkSum2 + "\n");
-  n = LK8EX1.length();
-  char LK8EX1c[n + 1];
-  strcpy(LK8EX1c, LK8EX1.c_str());
+  //Serial.println("Prima Stringa " + LK8EX1.substring(0, 20));
+  //Serial.println("Seconda Stringa " + LK8EX1.substring(20));
+  
+
   //Serial.println("$LK8EX1,99860,99999,9999,25,1000,*12");
   //if (bluetooth == true) SerialBT.println("$" + cmd_1 + "*" + checkSum2);
   if (deviceConnected) {
+    n = LK8EX1.substring(0, 20).length();
+  char LK8EX1c[n + 1];
+  strcpy(LK8EX1c, LK8EX1.substring(0, 20).c_str());
     pTxCharacteristic->setValue(LK8EX1c);
     pTxCharacteristic->notify();
-    txValue++;
+    n = LK8EX1.substring(20).length();
+  LK8EX1c[n + 1];
+  strcpy(LK8EX1c, LK8EX1.substring(20).c_str());
+    pTxCharacteristic->setValue(LK8EX1c);
+    pTxCharacteristic->notify();
+
     //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
   }
   //somma = 0;
@@ -1101,12 +1110,14 @@ void loop() {
               }
 
               if (ss.available()) {
+                Serial.begin(9600);
                 int ch = ss.read();
                 Serial.write(ch);
                 termPutchar(ch);
               }
 
               if (M5.BtnB.wasReleased()) {
+                Serial.begin(115200);
                 M5.Lcd.fillScreen(TFT_BLACK);
                 M5.Lcd.setTextSize(2);
                 M5.Lcd.begin();
