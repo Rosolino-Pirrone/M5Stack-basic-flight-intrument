@@ -253,6 +253,7 @@ void setup() {
   if (!SD.begin()) {
     M5.Lcd.setCursor(0, 25);
     M5.Lcd.printf("No SD");
+    Serial.println("No SD");
     M5.Speaker.beep();
   }
   M5.Power.begin();
