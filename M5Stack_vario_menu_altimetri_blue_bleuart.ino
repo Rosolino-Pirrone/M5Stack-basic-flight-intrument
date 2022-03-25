@@ -1110,14 +1110,12 @@ void loop() {
               }
 
               if (ss.available()) {
-                Serial.begin(9600);
                 int ch = ss.read();
                 Serial.write(ch);
                 termPutchar(ch);
               }
 
               if (M5.BtnB.wasReleased()) {
-                Serial.begin(115200);
                 M5.Lcd.fillScreen(TFT_BLACK);
                 M5.Lcd.setTextSize(2);
                 M5.Lcd.begin();
