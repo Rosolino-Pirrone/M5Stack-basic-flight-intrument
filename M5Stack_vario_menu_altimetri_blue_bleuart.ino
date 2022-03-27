@@ -24,7 +24,7 @@
 BLEServer *pServer = NULL;
 BLECharacteristic *pTxCharacteristic;
 bool deviceConnected = false;
-bool oldDeviceConnected = false;
+bool oldDeviceConnected = false; 
 
 
 // See the following for generating UUIDs:
