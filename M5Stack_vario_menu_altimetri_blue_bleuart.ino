@@ -663,7 +663,7 @@ void loop() {
     pTxCharacteristic->setValue(LK8EX1c);
     pTxCharacteristic->notify();
     n = LK8EX1.substring(20).length();
-  LK8EX1c[n + 1];
+  //LK8EX1c[n + 1];
   strcpy(LK8EX1c, LK8EX1.substring(20).c_str());
     pTxCharacteristic->setValue(LK8EX1c);
     pTxCharacteristic->notify();
