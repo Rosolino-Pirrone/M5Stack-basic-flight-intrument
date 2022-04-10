@@ -362,9 +362,9 @@ void setup() {
   }
   M5.Power.begin();
   M5.Power.setWakeupButton(2);
-  //M5.Power.setPowerBoostKeepOn(1);
+  M5.Power.setPowerBoostKeepOn(1);
   delay(100);
-  Serial.begin(115200);
+  //Serial.begin(115200);
 
   Serial.println("Starting Arduino BLE Client application...");
   BLEDevice::init("");
