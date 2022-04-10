@@ -135,8 +135,8 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 }; // MyAdvertisedDeviceCallbacks
 
 /*#define SERVICE_UUID           "6E400001-B5A3-F393-E0A9-E50E24DCCA9E" // UART service UUID
-#define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
-#define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"*/
+  #define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
+  #define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"*/
 
 
 /*class MyServerCallbacks: public BLEServerCallbacks {
@@ -147,7 +147,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     void onDisconnect(BLEServer* pServer) {
       deviceConnected = false;
     }
-};*/
+  };*/
 
 
 
@@ -383,34 +383,34 @@ void setup() {
   //BLEDevice::init("Arduvario");
 
   // Create the BLE Server
- /* pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
+  /* pServer = BLEDevice::createServer();
+    pServer->setCallbacks(new MyServerCallbacks());
 
-  // Create the BLE Service
-  BLEService *pService = pServer->createService(SERVICE_UUID);
+    // Create the BLE Service
+    BLEService *pService = pServer->createService(SERVICE_UUID);
 
-  // Create a BLE Characteristic
-  pTxCharacteristic = pService->createCharacteristic(
-                        CHARACTERISTIC_UUID_TX,
-                        BLECharacteristic::PROPERTY_NOTIFY
-                      );
+    // Create a BLE Characteristic
+    pTxCharacteristic = pService->createCharacteristic(
+                         CHARACTERISTIC_UUID_TX,
+                         BLECharacteristic::PROPERTY_NOTIFY
+                       );
 
-  pTxCharacteristic->addDescriptor(new BLE2902());
+    pTxCharacteristic->addDescriptor(new BLE2902());
 
-  BLECharacteristic * pRxCharacteristic = pService->createCharacteristic(
-      CHARACTERISTIC_UUID_RX,
-      BLECharacteristic::PROPERTY_WRITE
-                                          );
+    BLECharacteristic * pRxCharacteristic = pService->createCharacteristic(
+       CHARACTERISTIC_UUID_RX,
+       BLECharacteristic::PROPERTY_WRITE
+                                           );
 
-  //pRxCharacteristic->setCallbacks(new MyCallbacks());
+    //pRxCharacteristic->setCallbacks(new MyCallbacks());
 
-  // Start the service
-  pService->start();
+    // Start the service
+    pService->start();
 
-  // Start advertising
-  pServer->getAdvertising()->start();
-  Serial.println("Waiting a client connection to notify...");*/
-//Serial2.begin(9600, SERIAL_8N1, 16, 17);
+    // Start advertising
+    pServer->getAdvertising()->start();
+    Serial.println("Waiting a client connection to notify...");*/
+  //Serial2.begin(9600, SERIAL_8N1, 16, 17);
   ss.begin(9600);
   EEPROM.begin(EEPROM_SIZE);
   suono = EEPROM.read(0);
@@ -593,13 +593,13 @@ void loop() {
   //{
 
   if (doConnect == true) {
-      if (connectToServer()) {
-        Serial.println("We are now connected to the BLE Server.");
-      } else {
-        Serial.println("We have failed to connect to the server; there is nothin more we will do.");
-      }
-      doConnect = false;
+    if (connectToServer()) {
+      Serial.println("We are now connected to the BLE Server.");
+    } else {
+      Serial.println("We have failed to connect to the server; there is nothin more we will do.");
     }
+    doConnect = false;
+  }
 
 
   String RMC = ("GNRMC," + String(rmc_1.value()) + "," + rmc_2.value() + "," + String(rmc_3.value()) + "," + rmc_4.value() + "," + String(rmc_5.value()) + "," + rmc_6.value() + "," + String(rmc_7.value()) + "," + String(rmc_8.value()) + "," + String(rmc_9.value()) + "," + String(rmc_10.value()) + "," + String(rmc_11.value()) + "," + rmc_12.value() + ",");
@@ -608,16 +608,19 @@ void loop() {
   Serial.print(NMEA_RMC);
   //if (bluetooth == true) SerialBT.println(NMEA_RMC);
   int n = 0;
-  /*n = NMEA_RMC.length();
-  char NMEA_RMCc[n + 1];
-  strcpy(NMEA_RMCc, NMEA_RMC.c_str());
-  //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
-  if (deviceConnected) {
-    pTxCharacteristic->setValue(NMEA_RMCc);
-    pTxCharacteristic->notify();
+  if (connected) {
+    
+    pRemoteCharacteristic->writeValue(NMEA_RMC.substring(0, 20).c_str(), NMEA_RMC.substring(0, 20).length());
+    pRemoteCharacteristic->writeValue(NMEA_RMC.substring(20, 40).c_str(), NMEA_RMC.substring(20, 40).length());
+    pRemoteCharacteristic->writeValue(NMEA_RMC.substring(40, 60).c_str(), NMEA_RMC.substring(40, 60).length());
+    pRemoteCharacteristic->writeValue(NMEA_RMC.substring(60, 80).c_str(), NMEA_RMC.substring(60, 80).length());
+    pRemoteCharacteristic->writeValue(NMEA_RMC.substring(80, 100).c_str(), NMEA_RMC.substring(80, 100).length());
+    pRemoteCharacteristic->writeValue(NMEA_RMC.substring(100, 120).c_str(), NMEA_RMC.substring(100, 120).length());
 
-    //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
-  }*/
+
+  } else if (doScan) {
+    BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
+  }
 
 
   String GGA = ("GNGGA," + String(gga_1.value()) + "," + String(gga_2.value()) + "," + gga_3.value() + "," + String(gga_4.value()) + "," + gga_5.value() + "," + String(gga_6.value()) + "," + String(gga_7.value()) + "," + String(gga_8.value()) + "," + String(gga_9.value()) + "," + String(gga_10.value()) + "," + String(gga_11.value()) + "," + String(gga_12.value()) + "," + String(gga_13.value()) + ",");
@@ -625,16 +628,19 @@ void loop() {
   NMEA_GGA = ("$" + GGA + "*" + checkSum_ + "\n");
   Serial.print(NMEA_GGA);
   //if (bluetooth == true) SerialBT.println(NMEA_GGA);
- /* n = NMEA_GGA.length();
-  char NMEA_GGAc[n + 1];
-  strcpy(NMEA_GGAc, NMEA_GGA.c_str());
-  //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
-  if (deviceConnected) {
-    pTxCharacteristic->setValue(NMEA_GGAc);
-    pTxCharacteristic->notify();
+  if (connected) {
+    
+    pRemoteCharacteristic->writeValue(NMEA_GGA.substring(0, 20).c_str(), NMEA_GGA.substring(0, 20).length());
+    pRemoteCharacteristic->writeValue(NMEA_GGA.substring(20, 40).c_str(), NMEA_GGA.substring(20, 40).length());
+    pRemoteCharacteristic->writeValue(NMEA_GGA.substring(40, 60).c_str(), NMEA_GGA.substring(40, 60).length());
+    pRemoteCharacteristic->writeValue(NMEA_GGA.substring(60, 80).c_str(), NMEA_GGA.substring(60, 80).length());
+    pRemoteCharacteristic->writeValue(NMEA_GGA.substring(80, 100).c_str(), NMEA_GGA.substring(80, 100).length());
+    pRemoteCharacteristic->writeValue(NMEA_GGA.substring(100, 120).c_str(), NMEA_GGA.substring(100, 120).length());
 
-    //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
-  }*/
+
+  } else if (doScan) {
+    BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
+  }
   new_nmea = true;
   parse_nmea = NMEA_RMC;
 
@@ -649,7 +655,7 @@ void loop() {
   else FIX = false;
   //FIX = true;
   //Serial.println(millis());
-  /*if (FIX == true) {
+  if (FIX == true) {
     parse_nmea = NMEA_RMC;
     for (int i = 0; i < 9; i++)
     {
@@ -700,7 +706,7 @@ void loop() {
     listDir(SD, "/", 0);
 
     Serial.println(millis());
-    }*/
+    }
   //}
 
 
@@ -758,16 +764,16 @@ void loop() {
   String checkSum0 = String(checkSum(cmd), HEX);
   Serial.println("$" + cmd + "*" + checkSum0);              //Stringa alla seriale
   /*String POV = ("$" + cmd + "*" + checkSum0 + "\n");
-  n = POV.length();
-  char povc[n + 1];
-  strcpy(povc, POV.c_str());
-  //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
-  if (deviceConnected) {
+    n = POV.length();
+    char povc[n + 1];
+    strcpy(povc, POV.c_str());
+    //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
+    if (deviceConnected) {
     pTxCharacteristic->setValue(povc);
     pTxCharacteristic->notify();
 
     //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
-  }*/
+    }*/
 
   int Media_P_1 = int(Media_P * 100);
   int altitudine_1 = int(altitudine);
@@ -779,44 +785,33 @@ void loop() {
   String LK8EX1 = ("$" + cmd_1 + "*" + checkSum2 + "\n");
   //Serial.println("Prima Stringa " + LK8EX1.substring(0, 20));
   //Serial.println("Seconda Stringa " + LK8EX1.substring(20));
-  
+
 
   //Serial.println("$LK8EX1,99860,99999,9999,25,1000,*12");
   //if (bluetooth == true) SerialBT.println("$" + cmd_1 + "*" + checkSum2);
   /*if (deviceConnected) {
     n = LK8EX1.substring(0, 20).length();
-  char LK8EX1c[n + 1];
-  strcpy(LK8EX1c, LK8EX1.substring(0, 20).c_str());
+    char LK8EX1c[n + 1];
+    strcpy(LK8EX1c, LK8EX1.substring(0, 20).c_str());
     pTxCharacteristic->setValue(LK8EX1c);
     pTxCharacteristic->notify();
     n = LK8EX1.substring(20).length();
-  
-  strcpy(LK8EX1c, LK8EX1.substring(20).c_str());
+
+    strcpy(LK8EX1c, LK8EX1.substring(20).c_str());
     pTxCharacteristic->setValue(LK8EX1c);
     pTxCharacteristic->notify();
 
     //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
-  }*/
+    }*/
+    Serial.println(millis());
   if (connected) {
-        pRemoteCharacteristic->writeValue(NMEA_GGA.substring(0, 20).c_str(), NMEA_GGA.substring(0, 20).length());
-        pRemoteCharacteristic->writeValue(NMEA_GGA.substring(20, 40).c_str(), NMEA_GGA.substring(20, 40).length());
-        pRemoteCharacteristic->writeValue(NMEA_GGA.substring(40, 60).c_str(), NMEA_GGA.substring(40, 60).length());
-        pRemoteCharacteristic->writeValue(NMEA_GGA.substring(60, 80).c_str(), NMEA_GGA.substring(60, 80).length());
-        pRemoteCharacteristic->writeValue(NMEA_GGA.substring(80, 100).c_str(), NMEA_GGA.substring(80, 100).length());
-        pRemoteCharacteristic->writeValue(NMEA_GGA.substring(100, 120).c_str(), NMEA_GGA.substring(100, 120).length());
+    pRemoteCharacteristic->writeValue(LK8EX1.substring(0, 20).c_str(), LK8EX1.substring(0, 20).length());
+    pRemoteCharacteristic->writeValue(LK8EX1.substring(20).c_str(), LK8EX1.substring(20).length());
 
-        pRemoteCharacteristic->writeValue(NMEA_RMC.substring(0, 20).c_str(), NMEA_RMC.substring(0, 20).length());
-        pRemoteCharacteristic->writeValue(NMEA_RMC.substring(20, 40).c_str(), NMEA_RMC.substring(20, 40).length());
-        pRemoteCharacteristic->writeValue(NMEA_RMC.substring(40, 60).c_str(), NMEA_RMC.substring(40, 60).length());
-        pRemoteCharacteristic->writeValue(NMEA_RMC.substring(60, 80).c_str(), NMEA_RMC.substring(60, 80).length());
-        pRemoteCharacteristic->writeValue(NMEA_RMC.substring(80, 100).c_str(), NMEA_RMC.substring(80, 100).length());
-        pRemoteCharacteristic->writeValue(NMEA_RMC.substring(100, 120).c_str(), NMEA_RMC.substring(100, 120).length());
-
-        pRemoteCharacteristic->writeValue(LK8EX1.substring(0, 20).c_str(), LK8EX1.substring(0, 20).length());
-        pRemoteCharacteristic->writeValue(LK8EX1.substring(20).c_str(), LK8EX1.substring(20).length());
-      } else if (doScan) {
-        BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
-      }
+  } else if (doScan) {
+    BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
+  }
+  Serial.println(millis());
   //somma = 0;
 
   count = -1;
