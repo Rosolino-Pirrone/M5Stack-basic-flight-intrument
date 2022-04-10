@@ -712,12 +712,10 @@ void loop() {
 
 
   //Serial.println(millis());
-  Valori_Alt_Temp();       // richiamo la funzione Valori_Alt_Temp
-
-  valori_alt[media] = Valori[1];
   for (int i = 0; i < media; i++) {
-    valori_alt[i] = valori_alt[i + 1];      // memorizzo i valori nell'array valori_alt
-    somma = somma + valori_alt[i];
+    Valori_Alt_Temp();       // richiamo la funzione Valori_Alt_Temp
+    //valori_alt[i] = valori_alt[1];      // memorizzo i valori nell'array valori_alt
+    somma = somma + Valori[1];
   }
 
 
