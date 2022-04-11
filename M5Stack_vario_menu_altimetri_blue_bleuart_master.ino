@@ -214,7 +214,7 @@ int soglia_neg = 0;
 int media = 0;
 #define EEPROM_SIZE 512
 
-
+long loopTime_2 = millis();
 // The TinyGPS++ object
 TinyGPSPlus gps;
 
@@ -269,7 +269,7 @@ float Tono_beep_disc;
 void stringaBle( void * parameter ) {
 
   //Serial.print("globalIntTask: ");
-  Serial.println(*((String*)parameter));
+  //Serial.println(*((String*)parameter));
   String stringaBleUart = *((String*)parameter);
   int n = 1;
 
@@ -412,7 +412,7 @@ void setup() {
   pBLEScan->setWindow(449);
   pBLEScan->setActiveScan(true);
   pBLEScan->start(5, false);
-
+  long loopTime = millis();
 
 
   // Create the BLE Device
@@ -619,7 +619,7 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
   }
 }
 
-
+String stringaMtk;
 
 
 
@@ -645,10 +645,10 @@ void loop() {
   //Serial.print(NMEA_RMC);
   //if (bluetooth == true) SerialBT.println(NMEA_RMC);
   int n = 0;
-  Serial.print("T1= ");
-  Serial.println(millis());
+  //Serial.print("T1= ");
+  //Serial.println(millis());
 
-  Serial.println("stringaBle1");
+
 
 
 
@@ -665,26 +665,18 @@ void loop() {
     } else if (doScan) {
     BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
     }*/
-  Serial.print("T1= ");
-  Serial.println(millis());
+  //Serial.print("T1= ");
+  //Serial.println(millis());
 
   String GGA = ("GNGGA," + String(gga_1.value()) + "," + String(gga_2.value()) + "," + gga_3.value() + "," + String(gga_4.value()) + "," + gga_5.value() + "," + String(gga_6.value()) + "," + String(gga_7.value()) + "," + String(gga_8.value()) + "," + String(gga_9.value()) + "," + String(gga_10.value()) + "," + String(gga_11.value()) + "," + String(gga_12.value()) + "," + String(gga_13.value()) + ",");
   String checkSum_ = String(checkSum(GGA), HEX);
   NMEA_GGA = ("$" + GGA + "*" + checkSum_ + "\n");
   //Serial.print(NMEA_GGA);
   //if (bluetooth == true) SerialBT.println(NMEA_GGA);
-  Serial.print("T2= ");
-  Serial.println(millis());
+  //Serial.print("T2= ");
+  //Serial.println(millis());
 
-  Serial.println("stringaBle2");
-  NMEA_GGA += NMEA_RMC;
-  xTaskCreate(
-    stringaBle,             /* Task function. */
-    "stringaBle",           /* String with name of task. */
-    10000,                     /* Stack size in words. */
-    (void*)&NMEA_GGA,      /* Parameter passed as input of the task */
-    1,                         /* Priority of the task. */
-    NULL);                     /* Task handle. */
+
 
 
 
@@ -701,8 +693,8 @@ void loop() {
     } else if (doScan) {
     BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
     }*/
-  Serial.print("T2= ");
-  Serial.println(millis());
+  //Serial.print("T2= ");
+  //Serial.println(millis());
   new_nmea = true;
   parse_nmea = NMEA_RMC;
 
@@ -772,19 +764,25 @@ void loop() {
   //}
 
 
-  Serial.print("T0= ");
-  Serial.println(millis());
+  //Serial.print("T0= ");
+  //Serial.println(millis());
   //Serial.println(millis());
 
+  Valori_Alt_Temp();       // richiamo la funzione Valori_Alt_Temp
 
-
+  valori_alt[media] = Valori[1];
   for (int i = 0; i < media; i++) {
+    valori_alt[i] = valori_alt[i + 1];      // memorizzo i valori nell'array valori_alt
+    somma = somma + valori_alt[i];
+  }
+
+  /*for (int i = 0; i < media; i++) {
     Valori_Alt_Temp();       // richiamo la funzione Valori_Alt_Temp
     //valori_alt[i] = valori_alt[1];      // memorizzo i valori nell'array valori_alt
     somma = somma + Valori[1];
-  }
-  Serial.print("T0= ");
-  Serial.println(millis());
+    }*/
+  //Serial.print("T0= ");
+  //Serial.println(millis());
 
   float Media_P = somma / media;
   //Serial.println(millis());
@@ -794,8 +792,8 @@ void loop() {
   //Serial.println(media);
   loopTime = millis(); // reset the timer
   unsigned long Tempo = loopTime - previousMillis_velocita;
-  Serial.print("Tempo= ");
-  Serial.println(Tempo);
+  //Serial.print("Tempo= ");
+  //Serial.println(Tempo);
   previousMillis_velocita = loopTime;
   altitudine = 44330.0 * (1.0 - pow(Media_P / 1013.25, 0.1903));
   //Serial.print(F("Altitudine = "));
@@ -852,6 +850,23 @@ void loop() {
   //Serial.println("Prima Stringa " + LK8EX1.substring(0, 20));
   //Serial.println("Seconda Stringa " + LK8EX1.substring(20));
 
+  stringaMtk = LK8EX1 + NMEA_GGA + NMEA_RMC;
+  if (loopTime_2 > millis()) loopTime_2 = millis();
+  if (millis() - loopTime_2 > 1000) {
+    loopTime_2 = millis();
+    Serial.print(NMEA_GGA);
+    Serial.print(NMEA_RMC);
+    
+    //Serial.println("stringaBle");
+    NMEA_GGA += NMEA_RMC;
+    xTaskCreate(
+      stringaBle,             //* Task function.
+      "stringaBle",           //* String with name of task.
+      10000,                     //* Stack size in words.
+      (void*)&stringaMtk,      //* Parameter passed as input of the task
+      1,                         //* Priority of the task.
+      NULL);                     //* Task handle.
+  }
 
   //Serial.println("$LK8EX1,99860,99999,9999,25,1000,*12");
   //if (bluetooth == true) SerialBT.println("$" + cmd_1 + "*" + checkSum2);
@@ -869,17 +884,17 @@ void loop() {
 
     //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
     }*/
-  Serial.print("T3= ");
-  Serial.println(millis());
+  //Serial.print("T3= ");
+  //Serial.println(millis());
   /*if (connected) {
     pRemoteCharacteristic->writeValue(LK8EX1.substring(0, 20).c_str(), LK8EX1.substring(0, 20).length());
-    pRemoteCharacteristic->writeValue(LK8EX1.substring(20).c_str(), LK8EX1.substring(20).length());
+    pRemoteCharacteristic->writeValue(LK8EX1.substring(20,40).c_str(), LK8EX1.substring(20,40).length());
 
     } else if (doScan) {
     BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
     }*/
-  Serial.print("T3= ");
-  Serial.println(millis());
+  //Serial.print("T3= ");
+  //Serial.println(millis());
   //somma = 0;
 
   count = -1;
