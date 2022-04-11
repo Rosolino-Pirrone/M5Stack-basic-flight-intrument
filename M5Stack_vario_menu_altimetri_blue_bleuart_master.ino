@@ -262,7 +262,37 @@ float Tono_beep = 0;
 float Durata_beep;
 float Tono_beep_disc;
 
+//String stringaBleUart;
 
+//////////////////     Funzione multitasking      //////////////////
+
+void stringaBle( void * parameter ) {
+
+  //Serial.print("globalIntTask: ");
+  Serial.println(*((String*)parameter));
+  String stringaBleUart = *((String*)parameter);
+  int n = 1;
+
+  while (n > 0)
+  {
+    n = stringaBleUart.length();
+
+    if (connected) {
+      pRemoteCharacteristic->writeValue(stringaBleUart.substring(0, 20).c_str(), stringaBleUart.substring(0, 20).length());
+      /*pRemoteCharacteristic->writeValue(stringaBleUart.substring(20, 40).c_str(), stringaBleUart.substring(20, 40).length());
+        pRemoteCharacteristic->writeValue(stringaBleUart.substring(40, 60).c_str(), stringaBleUart.substring(40, 60).length());
+        pRemoteCharacteristic->writeValue(stringaBleUart.substring(60, 80).c_str(), stringaBleUart.substring(60, 80).length());
+        pRemoteCharacteristic->writeValue(stringaBleUart.substring(80, 100).c_str(), stringaBleUart.substring(80, 100).length());
+        pRemoteCharacteristic->writeValue(stringaBleUart.substring(100, 120).c_str(), stringaBleUart.substring(100, 120).length());*/
+
+
+    } else if (doScan) {
+      BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
+    }
+    stringaBleUart.remove(0, 20);
+  }
+  vTaskDelete( NULL );
+}
 
 //////////////////     Funzione interrupt suono      //////////////////
 
@@ -286,6 +316,10 @@ void IRAM_ATTR suonoVarioDiscendenza() {
   state_disc = true;
   //Serial.println("state_disc = true");
 }
+
+
+
+//////////////////     Datalog GPS      //////////////////
 
 void coreTask( void * pvParameters ) {
   delay(1000);
@@ -378,6 +412,8 @@ void setup() {
   pBLEScan->setWindow(449);
   pBLEScan->setActiveScan(true);
   pBLEScan->start(5, false);
+
+
 
   // Create the BLE Device
   //BLEDevice::init("Arduvario");
@@ -550,6 +586,7 @@ void setup() {
   Serial.println("Task created...");
   /*M5.Lcd.setBrightness(0);
     M5.Lcd.sleep();*/
+
 }
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
   Serial.printf("Listing directory: %s\n", dirname);
@@ -605,11 +642,18 @@ void loop() {
   String RMC = ("GNRMC," + String(rmc_1.value()) + "," + rmc_2.value() + "," + String(rmc_3.value()) + "," + rmc_4.value() + "," + String(rmc_5.value()) + "," + rmc_6.value() + "," + String(rmc_7.value()) + "," + String(rmc_8.value()) + "," + String(rmc_9.value()) + "," + String(rmc_10.value()) + "," + String(rmc_11.value()) + "," + rmc_12.value() + ",");
   String checkSum_2 = String(checkSum(RMC), HEX);
   NMEA_RMC = ("$" + RMC + "*" + checkSum_2 + "\n");
-  Serial.print(NMEA_RMC);
+  //Serial.print(NMEA_RMC);
   //if (bluetooth == true) SerialBT.println(NMEA_RMC);
   int n = 0;
-  if (connected) {
-    
+  Serial.print("T1= ");
+  Serial.println(millis());
+
+  Serial.println("stringaBle1");
+
+
+
+  /*if (connected) {
+
     pRemoteCharacteristic->writeValue(NMEA_RMC.substring(0, 20).c_str(), NMEA_RMC.substring(0, 20).length());
     pRemoteCharacteristic->writeValue(NMEA_RMC.substring(20, 40).c_str(), NMEA_RMC.substring(20, 40).length());
     pRemoteCharacteristic->writeValue(NMEA_RMC.substring(40, 60).c_str(), NMEA_RMC.substring(40, 60).length());
@@ -618,18 +662,34 @@ void loop() {
     pRemoteCharacteristic->writeValue(NMEA_RMC.substring(100, 120).c_str(), NMEA_RMC.substring(100, 120).length());
 
 
-  } else if (doScan) {
+    } else if (doScan) {
     BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
-  }
-
+    }*/
+  Serial.print("T1= ");
+  Serial.println(millis());
 
   String GGA = ("GNGGA," + String(gga_1.value()) + "," + String(gga_2.value()) + "," + gga_3.value() + "," + String(gga_4.value()) + "," + gga_5.value() + "," + String(gga_6.value()) + "," + String(gga_7.value()) + "," + String(gga_8.value()) + "," + String(gga_9.value()) + "," + String(gga_10.value()) + "," + String(gga_11.value()) + "," + String(gga_12.value()) + "," + String(gga_13.value()) + ",");
   String checkSum_ = String(checkSum(GGA), HEX);
   NMEA_GGA = ("$" + GGA + "*" + checkSum_ + "\n");
-  Serial.print(NMEA_GGA);
+  //Serial.print(NMEA_GGA);
   //if (bluetooth == true) SerialBT.println(NMEA_GGA);
-  if (connected) {
-    
+  Serial.print("T2= ");
+  Serial.println(millis());
+
+  Serial.println("stringaBle2");
+  NMEA_GGA += NMEA_RMC;
+  xTaskCreate(
+    stringaBle,             /* Task function. */
+    "stringaBle",           /* String with name of task. */
+    10000,                     /* Stack size in words. */
+    (void*)&NMEA_GGA,      /* Parameter passed as input of the task */
+    1,                         /* Priority of the task. */
+    NULL);                     /* Task handle. */
+
+
+
+  /*if (connected) {
+
     pRemoteCharacteristic->writeValue(NMEA_GGA.substring(0, 20).c_str(), NMEA_GGA.substring(0, 20).length());
     pRemoteCharacteristic->writeValue(NMEA_GGA.substring(20, 40).c_str(), NMEA_GGA.substring(20, 40).length());
     pRemoteCharacteristic->writeValue(NMEA_GGA.substring(40, 60).c_str(), NMEA_GGA.substring(40, 60).length());
@@ -638,9 +698,11 @@ void loop() {
     pRemoteCharacteristic->writeValue(NMEA_GGA.substring(100, 120).c_str(), NMEA_GGA.substring(100, 120).length());
 
 
-  } else if (doScan) {
+    } else if (doScan) {
     BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
-  }
+    }*/
+  Serial.print("T2= ");
+  Serial.println(millis());
   new_nmea = true;
   parse_nmea = NMEA_RMC;
 
@@ -705,19 +767,24 @@ void loop() {
 
     listDir(SD, "/", 0);
 
-    Serial.println(millis());
-    }
+    //Serial.println(millis());
+  }
   //}
 
 
-
+  Serial.print("T0= ");
+  Serial.println(millis());
   //Serial.println(millis());
+
+
+
   for (int i = 0; i < media; i++) {
     Valori_Alt_Temp();       // richiamo la funzione Valori_Alt_Temp
     //valori_alt[i] = valori_alt[1];      // memorizzo i valori nell'array valori_alt
     somma = somma + Valori[1];
   }
-
+  Serial.print("T0= ");
+  Serial.println(millis());
 
   float Media_P = somma / media;
   //Serial.println(millis());
@@ -727,7 +794,8 @@ void loop() {
   //Serial.println(media);
   loopTime = millis(); // reset the timer
   unsigned long Tempo = loopTime - previousMillis_velocita;
-  //Serial.println(Tempo);
+  Serial.print("Tempo= ");
+  Serial.println(Tempo);
   previousMillis_velocita = loopTime;
   altitudine = 44330.0 * (1.0 - pow(Media_P / 1013.25, 0.1903));
   //Serial.print(F("Altitudine = "));
@@ -801,14 +869,16 @@ void loop() {
 
     //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
     }*/
-    Serial.println(millis());
-  if (connected) {
+  Serial.print("T3= ");
+  Serial.println(millis());
+  /*if (connected) {
     pRemoteCharacteristic->writeValue(LK8EX1.substring(0, 20).c_str(), LK8EX1.substring(0, 20).length());
     pRemoteCharacteristic->writeValue(LK8EX1.substring(20).c_str(), LK8EX1.substring(20).length());
 
-  } else if (doScan) {
+    } else if (doScan) {
     BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
-  }
+    }*/
+  Serial.print("T3= ");
   Serial.println(millis());
   //somma = 0;
 
@@ -1296,6 +1366,7 @@ void loop() {
 
 
   ///////////////////////////////////////////////////////////////   Suono vario   ////////////////////////////////////////////////////////////////////
+
 
   Periodo_beep = Vario_al_secondo * 100;
   if (Periodo_beep > 600) Periodo_beep = 600;
