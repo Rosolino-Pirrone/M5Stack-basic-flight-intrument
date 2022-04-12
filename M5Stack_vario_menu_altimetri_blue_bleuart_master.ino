@@ -709,7 +709,7 @@ void loop() {
   else FIX = false;
   //FIX = true;
   //Serial.println(millis());
-  if (FIX == true) {
+  /*if (FIX == true) {
     parse_nmea = NMEA_RMC;
     for (int i = 0; i < 9; i++)
     {
@@ -760,7 +760,7 @@ void loop() {
     listDir(SD, "/", 0);
 
     //Serial.println(millis());
-  }
+  }*/
   //}
 
 
