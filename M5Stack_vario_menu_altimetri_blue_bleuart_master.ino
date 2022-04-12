@@ -192,6 +192,7 @@ float Vario_al_secondo = 0;
 float altitudine = 0;
 unsigned long previousMillis_velocita = 0;
 
+String last_rmc_1;
 String NMEA_RMC;
 String NMEA_GGA;
 bool FIX = false;
@@ -851,8 +852,10 @@ void loop() {
   //Serial.println("Seconda Stringa " + LK8EX1.substring(20));
 
   stringaMtk = LK8EX1 + NMEA_GGA + NMEA_RMC;
-  if (loopTime_2 > millis()) loopTime_2 = millis();
-  if (millis() - loopTime_2 > 1000) {
+  //if (loopTime_2 > millis()) loopTime_2 = millis();
+  //if (millis() - loopTime_2 > 1000)
+  if (last_rmc_1 != String(rmc_1.value()))
+  {
     loopTime_2 = millis();
     Serial.print(NMEA_GGA);
     Serial.print(NMEA_RMC);
