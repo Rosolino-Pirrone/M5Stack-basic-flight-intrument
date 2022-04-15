@@ -835,8 +835,8 @@ void loop() {
   //Serial.println(media);
   loopTime = millis(); // reset the timer
   unsigned long Tempo = loopTime - previousMillis_velocita;
-  Serial.print("Tempo= ");
-  Serial.println(Tempo);
+  //Serial.print("Tempo= ");
+  //Serial.println(Tempo);
   previousMillis_velocita = loopTime;
   altitudine = 44330.0 * (1.0 - pow(Media_P / 1013.25, 0.1903));
   //Serial.print(F("Altitudine = "));
@@ -1287,8 +1287,9 @@ void loop() {
           M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
           M5.Lcd.setCursor(0, 125);
           M5.Lcd.print("Bluetooth");
-          Serial.print("Bluetooth ");
-          Serial.println(bluetooth);
+          Serial.print("Bluetooth=");
+          Serial.print(bluetooth);
+          Serial.println(". B to change");
           M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
           M5.Lcd.setCursor(0, 150);
           M5.Lcd.print("GPS serial monitor");
@@ -1313,7 +1314,7 @@ void loop() {
                 M5.Lcd.print("On ");
                 M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
                 M5.Lcd.setCursor(0, 180);
-                Serial.print("Bluetooth " + String(bluetooth) + ". ");
+                Serial.print("Bluetooth=" + String(bluetooth) + ". ");
                 M5.Lcd.print("Do you whant restart?");
                 Serial.println("Do you whant change end restart? Button B to yes or button C to no");
 
