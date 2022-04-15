@@ -262,6 +262,7 @@ float Periodo_beep = 0;
 float Tono_beep = 0;
 float Durata_beep;
 float Tono_beep_disc;
+int s = 0;
 
 //String stringaBleUart;
 
@@ -292,6 +293,63 @@ void stringaBle( void * parameter ) {
     }
     stringaBleUart.remove(0, 20);
   }
+
+  if ((FIX == true) && (new_nmea == true)) {
+    //Serial.println(millis());
+    //Serial.println("FIX == true);
+    parse_nmea = NMEA_RMC;
+    for (int i = 0; i < 9; i++)
+    {
+      q = parse_nmea.indexOf(",");
+      parse_nmea.remove(0, (q + 1)) ;
+    }
+    q = parse_nmea.indexOf(",");
+    parse_nmea.remove(q);
+    String date_log = parse_nmea;
+
+    String date_nome_file;
+    File root = SD.open("/");
+    file = root.openNextFile();
+    date_nome_file = file.name();
+
+    while (file) {
+      date_nome_file = file.name();
+      file = root.openNextFile();
+
+    }
+
+    date_nome_file.remove(0,  1) ;
+    date_nome_file.remove(6);
+    int c = !date_nome_file.equals(date_log);
+
+    if (!date_nome_file.equals(date_log)) {
+      file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_WRITE);
+      delay(5);
+      other_number = true;
+    } else {
+      for (int i = 0; i < 30; i++) {
+        if (!SD.exists("/" + date_log + String(i) + ".nmea") && other_number == false) {
+          file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_WRITE);
+          delay(5);
+          file_number = i;
+          other_number = true;
+        }
+
+      }
+
+    }
+
+    file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_APPEND);
+    file.print(NMEA_RMC + "\n");
+    file.print(NMEA_GGA + "\n");
+    //file.flush();
+    file.close();
+
+    //listDir(SD, "/", 0);
+
+    //Serial.println(millis());
+  }
+
   vTaskDelete( NULL );
 }
 
@@ -329,6 +387,7 @@ void coreTask( void * pvParameters ) {
     delay(2);
     if ((FIX == true) && (new_nmea == true)) {
       //Serial.println(millis());
+      //Serial.println("FIX == true);
       parse_nmea = NMEA_RMC;
       for (int i = 0; i < 9; i++)
       {
@@ -396,58 +455,26 @@ void setup() {
     M5.Speaker.beep();
   }
   M5.Power.begin();
-  M5.Power.setWakeupButton(2);
-  M5.Power.setPowerBoostKeepOn(1);
+  //M5.Power.setWakeupButton(2);
+  //M5.Power.setPowerBoostKeepOn(1);
   delay(100);
   //Serial.begin(115200);
 
-  Serial.println("Starting Arduino BLE Client application...");
-  BLEDevice::init("");
+  ledcSetup(channel, freq, resolution);
+  ledcAttachPin(25, channel);
+  ledcWriteTone(channel, 1000);
+  delay(125);
+  ledcWriteTone(channel, 0);
+  ledcWriteTone(channel, 750);
+  delay(125);
+  ledcWriteTone(channel, 0);
+  ledcWriteTone(channel, 500);
+  delay(125);
+  ledcWriteTone(channel, 0);
+  delay(125);
 
-  // Retrieve a Scanner and set the callback we want to use to be informed when we
-  // have detected a new device.  Specify that we want active scanning and start the
-  // scan to run for 5 seconds.
-  BLEScan* pBLEScan = BLEDevice::getScan();
-  pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
-  pBLEScan->setInterval(1349);
-  pBLEScan->setWindow(449);
-  pBLEScan->setActiveScan(true);
-  pBLEScan->start(5, false);
-  long loopTime = millis();
+  Serial.println("Starting Arduvario BLE Client application...");
 
-
-  // Create the BLE Device
-  //BLEDevice::init("Arduvario");
-
-  // Create the BLE Server
-  /* pServer = BLEDevice::createServer();
-    pServer->setCallbacks(new MyServerCallbacks());
-
-    // Create the BLE Service
-    BLEService *pService = pServer->createService(SERVICE_UUID);
-
-    // Create a BLE Characteristic
-    pTxCharacteristic = pService->createCharacteristic(
-                         CHARACTERISTIC_UUID_TX,
-                         BLECharacteristic::PROPERTY_NOTIFY
-                       );
-
-    pTxCharacteristic->addDescriptor(new BLE2902());
-
-    BLECharacteristic * pRxCharacteristic = pService->createCharacteristic(
-       CHARACTERISTIC_UUID_RX,
-       BLECharacteristic::PROPERTY_WRITE
-                                           );
-
-    //pRxCharacteristic->setCallbacks(new MyCallbacks());
-
-    // Start the service
-    pService->start();
-
-    // Start advertising
-    pServer->getAdvertising()->start();
-    Serial.println("Waiting a client connection to notify...");*/
-  //Serial2.begin(9600, SERIAL_8N1, 16, 17);
   ss.begin(9600);
   EEPROM.begin(EEPROM_SIZE);
   suono = EEPROM.read(0);
@@ -456,10 +483,31 @@ void setup() {
   media = EEPROM.read(3);
   q_2 = EEPROM.get(3, q_2);
   bluetooth = EEPROM.read(6);
-  //if (bluetooth == true) SerialBT.begin("Arduvario"); //Bluetooth device name
-  Serial.println("The device started, now you can pair it with bluetooth!");
-  ledcSetup(channel, freq, resolution);
-  ledcAttachPin(25, channel);
+
+  /*EEPROM.write(0, 0);
+            EEPROM.commit();
+            EEPROM.write(1, 20);
+            EEPROM.commit();
+            EEPROM.write(2, 180);
+            EEPROM.commit();
+            EEPROM.write(3, 15);
+            EEPROM.commit();*/
+
+  if (bluetooth == true) {
+    Serial.println("The device started, now you can pair it with bluetooth!");
+
+    BLEDevice::init("");
+    // Retrieve a Scanner and set the callback we want to use to be informed when we
+    // have detected a new device.  Specify that we want active scanning and start the
+    // scan to run for 5 seconds.
+    BLEScan* pBLEScan = BLEDevice::getScan();
+    pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
+    pBLEScan->setInterval(1349);
+    pBLEScan->setWindow(449);
+    pBLEScan->setActiveScan(true);
+    pBLEScan->start(5, false);
+  }
+  long loopTime = millis();
 
 
   M5.Lcd.fillScreen(BLACK);
@@ -575,19 +623,20 @@ void setup() {
   delay(1000);
   //Serial.print("Tempo = ");
   //Serial.println(millis());
-  xTaskCreatePinnedToCore(
-    coreTask,   /* Function to implement the task */
-    "coreTask", /* Name of the task */
-    10000,      /* Stack size in words */
-    NULL,       /* Task input parameter */
-    0,          /* Priority of the task */
-    NULL,       /* Task handle. */
-    taskCore);  /* Core where the task should run */
+  if (bluetooth == false) {
+    xTaskCreatePinnedToCore(
+      coreTask,   /* Function to implement the task */
+      "coreTask", /* Name of the task */
+      10000,      /* Stack size in words */
+      NULL,       /* Task input parameter */
+      0,          /* Priority of the task */
+      NULL,       /* Task handle. */
+      taskCore);  /* Core where the task should run */
 
-  Serial.println("Task created...");
-  /*M5.Lcd.setBrightness(0);
-    M5.Lcd.sleep();*/
-
+    Serial.println("Task created...");
+    /*M5.Lcd.setBrightness(0);
+      M5.Lcd.sleep();*/
+  }
 }
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
   Serial.printf("Listing directory: %s\n", dirname);
@@ -629,16 +678,16 @@ void loop() {
 
   //if (rmc_1.isUpdated() ||  gga_1.isUpdated())
   //{
-
-  if (doConnect == true) {
-    if (connectToServer()) {
-      Serial.println("We are now connected to the BLE Server.");
-    } else {
-      Serial.println("We have failed to connect to the server; there is nothin more we will do.");
+  if (bluetooth == true) {
+    if (doConnect == true) {
+      if (connectToServer()) {
+        Serial.println("We are now connected to the BLE Server.");
+      } else {
+        Serial.println("We have failed to connect to the server; there is nothin more we will do.");
+      }
+      doConnect = false;
     }
-    doConnect = false;
   }
-
 
   String RMC = ("GNRMC," + String(rmc_1.value()) + "," + rmc_2.value() + "," + String(rmc_3.value()) + "," + rmc_4.value() + "," + String(rmc_5.value()) + "," + rmc_6.value() + "," + String(rmc_7.value()) + "," + String(rmc_8.value()) + "," + String(rmc_9.value()) + "," + String(rmc_10.value()) + "," + String(rmc_11.value()) + "," + rmc_12.value() + ",");
   String checkSum_2 = String(checkSum(RMC), HEX);
@@ -649,23 +698,19 @@ void loop() {
   //Serial.print("T1= ");
   //Serial.println(millis());
 
-
-
-
-
   /*if (connected) {
 
-    pRemoteCharacteristic->writeValue(NMEA_RMC.substring(0, 20).c_str(), NMEA_RMC.substring(0, 20).length());
-    pRemoteCharacteristic->writeValue(NMEA_RMC.substring(20, 40).c_str(), NMEA_RMC.substring(20, 40).length());
-    pRemoteCharacteristic->writeValue(NMEA_RMC.substring(40, 60).c_str(), NMEA_RMC.substring(40, 60).length());
-    pRemoteCharacteristic->writeValue(NMEA_RMC.substring(60, 80).c_str(), NMEA_RMC.substring(60, 80).length());
-    pRemoteCharacteristic->writeValue(NMEA_RMC.substring(80, 100).c_str(), NMEA_RMC.substring(80, 100).length());
-    pRemoteCharacteristic->writeValue(NMEA_RMC.substring(100, 120).c_str(), NMEA_RMC.substring(100, 120).length());
+      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(0, 20).c_str(), NMEA_RMC.substring(0, 20).length());
+      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(20, 40).c_str(), NMEA_RMC.substring(20, 40).length());
+      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(40, 60).c_str(), NMEA_RMC.substring(40, 60).length());
+      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(60, 80).c_str(), NMEA_RMC.substring(60, 80).length());
+      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(80, 100).c_str(), NMEA_RMC.substring(80, 100).length());
+      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(100, 120).c_str(), NMEA_RMC.substring(100, 120).length());
 
 
-    } else if (doScan) {
-    BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
-    }*/
+      } else if (doScan) {
+      BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
+      }*/
   //Serial.print("T1= ");
   //Serial.println(millis());
 
@@ -677,25 +722,22 @@ void loop() {
   //Serial.print("T2= ");
   //Serial.println(millis());
 
-
-
-
-
   /*if (connected) {
 
-    pRemoteCharacteristic->writeValue(NMEA_GGA.substring(0, 20).c_str(), NMEA_GGA.substring(0, 20).length());
-    pRemoteCharacteristic->writeValue(NMEA_GGA.substring(20, 40).c_str(), NMEA_GGA.substring(20, 40).length());
-    pRemoteCharacteristic->writeValue(NMEA_GGA.substring(40, 60).c_str(), NMEA_GGA.substring(40, 60).length());
-    pRemoteCharacteristic->writeValue(NMEA_GGA.substring(60, 80).c_str(), NMEA_GGA.substring(60, 80).length());
-    pRemoteCharacteristic->writeValue(NMEA_GGA.substring(80, 100).c_str(), NMEA_GGA.substring(80, 100).length());
-    pRemoteCharacteristic->writeValue(NMEA_GGA.substring(100, 120).c_str(), NMEA_GGA.substring(100, 120).length());
+      pRemoteCharacteristic->writeValue(NMEA_GGA.substring(0, 20).c_str(), NMEA_GGA.substring(0, 20).length());
+      pRemoteCharacteristic->writeValue(NMEA_GGA.substring(20, 40).c_str(), NMEA_GGA.substring(20, 40).length());
+      pRemoteCharacteristic->writeValue(NMEA_GGA.substring(40, 60).c_str(), NMEA_GGA.substring(40, 60).length());
+      pRemoteCharacteristic->writeValue(NMEA_GGA.substring(60, 80).c_str(), NMEA_GGA.substring(60, 80).length());
+      pRemoteCharacteristic->writeValue(NMEA_GGA.substring(80, 100).c_str(), NMEA_GGA.substring(80, 100).length());
+      pRemoteCharacteristic->writeValue(NMEA_GGA.substring(100, 120).c_str(), NMEA_GGA.substring(100, 120).length());
 
 
-    } else if (doScan) {
-    BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
-    }*/
+      } else if (doScan) {
+      BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
+      }*/
   //Serial.print("T2= ");
   //Serial.println(millis());
+  //Serial.println(rmc_1.isUpdated());
   new_nmea = true;
   parse_nmea = NMEA_RMC;
 
@@ -761,7 +803,7 @@ void loop() {
     listDir(SD, "/", 0);
 
     //Serial.println(millis());
-  }*/
+    }*/
   //}
 
 
@@ -770,8 +812,8 @@ void loop() {
   //Serial.println(millis());
 
   Valori_Alt_Temp();       // richiamo la funzione Valori_Alt_Temp
-
   valori_alt[media] = Valori[1];
+
   for (int i = 0; i < media; i++) {
     valori_alt[i] = valori_alt[i + 1];      // memorizzo i valori nell'array valori_alt
     somma = somma + valori_alt[i];
@@ -793,8 +835,8 @@ void loop() {
   //Serial.println(media);
   loopTime = millis(); // reset the timer
   unsigned long Tempo = loopTime - previousMillis_velocita;
-  //Serial.print("Tempo= ");
-  //Serial.println(Tempo);
+  Serial.print("Tempo= ");
+  Serial.println(Tempo);
   previousMillis_velocita = loopTime;
   altitudine = 44330.0 * (1.0 - pow(Media_P / 1013.25, 0.1903));
   //Serial.print(F("Altitudine = "));
@@ -851,26 +893,28 @@ void loop() {
   //Serial.println("Prima Stringa " + LK8EX1.substring(0, 20));
   //Serial.println("Seconda Stringa " + LK8EX1.substring(20));
 
-  stringaMtk = LK8EX1 + NMEA_GGA + NMEA_RMC;
+  stringaMtk = LK8EX1 + NMEA_GGA + NMEA_RMC + "Arduvario\n";
   //if (loopTime_2 > millis()) loopTime_2 = millis();
-  //if (millis() - loopTime_2 > 1000)
-  if (last_rmc_1 != String(rmc_1.value()))
-  {
-    loopTime_2 = millis();
-    Serial.print(NMEA_GGA);
-    Serial.print(NMEA_RMC);
-    
-    //Serial.println("stringaBle");
-    NMEA_GGA += NMEA_RMC;
-    xTaskCreate(
-      stringaBle,             //* Task function.
-      "stringaBle",           //* String with name of task.
-      10000,                     //* Stack size in words.
-      (void*)&stringaMtk,      //* Parameter passed as input of the task
-      1,                         //* Priority of the task.
-      NULL);                     //* Task handle.
-  }
+  //if (millis() - loopTime_2 > 1000) {
+  if (bluetooth == true) {
+    if (last_rmc_1 != String(rmc_1.value()))
+    {
+      loopTime_2 = millis();
+      Serial.print(NMEA_GGA);
+      Serial.print(NMEA_RMC);
 
+      //Serial.println("stringaBle");
+      //NMEA_GGA += NMEA_RMC;
+      xTaskCreate(
+        stringaBle,             //* Task function.
+        "stringaBle",           //* String with name of task.
+        10000,                     //* Stack size in words.
+        (void*)&stringaMtk,      //* Parameter passed as input of the task
+        1,                         //* Priority of the task.
+        NULL);                     //* Task handle.
+    }
+    last_rmc_1 = String(rmc_1.value());
+  }
   //Serial.println("$LK8EX1,99860,99999,9999,25,1000,*12");
   //if (bluetooth == true) SerialBT.println("$" + cmd_1 + "*" + checkSum2);
   /*if (deviceConnected) {
@@ -917,6 +961,16 @@ void loop() {
     Serial.print("Battery ");
     Serial.println(M5.Power.getBatteryLevel());
   } else if (M5.BtnB.wasReleasefor(700)) {
+    ledcWriteTone(channel, 1000);
+    delay(75);
+    ledcWriteTone(channel, 0);
+    ledcWriteTone(channel, 750);
+    delay(75);
+    ledcWriteTone(channel, 0);
+    ledcWriteTone(channel, 500);
+    delay(75);
+    ledcWriteTone(channel, 0);
+
     M5.powerOFF();                                         // Spegne M5Stack sotto carica USB
   } else if (M5.BtnC.wasReleased()) {
     altimetro = !altimetro;
@@ -1200,6 +1254,7 @@ void loop() {
           } else if (M5.BtnC.wasReleased()) {
             M5.Lcd.fillScreen(TFT_BLACK);
             media += 1;
+            if (media > 50) media = 50;
             EEPROM.write(3, media);
             EEPROM.commit();
           }
@@ -1250,7 +1305,7 @@ void loop() {
           if (M5.BtnB.wasReleased()) {
             M5.Lcd.setCursor(125, 220);
             M5.Lcd.print("      ");
-            if (bluetooth == false) {
+            //if (bluetooth == false) {
               while (1) {
                 M5.update();
                 M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
@@ -1258,7 +1313,10 @@ void loop() {
                 M5.Lcd.print("On ");
                 M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
                 M5.Lcd.setCursor(0, 180);
+                Serial.print("Bluetooth " + String(bluetooth) + ". ");
                 M5.Lcd.print("Do you whant restart?");
+                Serial.println("Do you whant change end restart? Button B to yes or button C to no");
+
                 M5.Lcd.setCursor(145, 220);
                 M5.Lcd.print("YES");
                 M5.Lcd.setCursor(240, 220);
@@ -1277,12 +1335,13 @@ void loop() {
                   break;
                 }
               }
-            } else {
+            //} 
+            /*else {
               bluetooth = !bluetooth;
               EEPROM.write(6, bluetooth);
               EEPROM.commit();
               //if (bluetooth == false) SerialBT.end();
-            }
+            }*/
 
           }
           break;
@@ -1408,67 +1467,71 @@ void loop() {
 
 
   if (suono == 1) {
-    if (Vario_al_secondo >= soglia_positivo) {
+    if (s >= media) {
+      if (Vario_al_secondo >= soglia_positivo) {
 
-      if (state == false)
-      {
-        if (state_disc == true) {
-          ledcWriteTone(channel, 0);
-          state_disc = false;
+        if (state == false)
+        {
+          if (state_disc == true) {
+            ledcWriteTone(channel, 0);
+            state_disc = false;
 
+          }
+          if (millis() - loopTimeVario > Periodo_beep) {
+            loopTimeVario = millis(); // reset the timer
+            timerAttachInterrupt(timer, &suonoVario, true);  //attach callback
+            timerAlarmWrite(timer, wdtTimeout * 500, false); //set time in us
+            timerAlarmEnable(timer);                          //enable interrupt
+            //state = true;
+            //Serial.println("state true");
+          }
         }
+      }
+
+      if (state == true) {
         if (millis() - loopTimeVario > Periodo_beep) {
           loopTimeVario = millis(); // reset the timer
-          timerAttachInterrupt(timer, &suonoVario, true);  //attach callback
-          timerAlarmWrite(timer, wdtTimeout * 500, false); //set time in us
-          timerAlarmEnable(timer);                          //enable interrupt
-          //state = true;
-          //Serial.println("state true");
+          ledcWriteTone(channel, 0);
+          state = false;
+
         }
       }
-    }
-
-    if (state == true) {
-      if (millis() - loopTimeVario > Periodo_beep) {
-        loopTimeVario = millis(); // reset the timer
-        ledcWriteTone(channel, 0);
-        state = false;
-
-      }
-    }
 
 
-    if (Vario_al_secondo <= -soglia_negativo && state_disc == false)
-    {
+      if (Vario_al_secondo <= -soglia_negativo && state_disc == false)
+      {
 
 
-      timerAttachInterrupt(timer, &suonoVarioDiscendenza, true);  //attach callback
-      timerAlarmWrite(timer, wdtTimeout * 500, false); //set time in us
-      timerAlarmEnable(timer);                          //enable interrupt
-
-
-    }
-    else if (Vario_al_secondo <= -soglia_negativo && state_disc == true) {
-      if (millis() - loopTimeSuonoFalse > 333) {
-        loopTimeSuonoFalse = millis(); // reset the
         timerAttachInterrupt(timer, &suonoVarioDiscendenza, true);  //attach callback
         timerAlarmWrite(timer, wdtTimeout * 500, false); //set time in us
-        timerAlarmEnable(timer);
+        timerAlarmEnable(timer);                          //enable interrupt
+
+
       }
-    }
+      else if (Vario_al_secondo <= -soglia_negativo && state_disc == true) {
+        if (millis() - loopTimeSuonoFalse > 333) {
+          loopTimeSuonoFalse = millis(); // reset the
+          timerAttachInterrupt(timer, &suonoVarioDiscendenza, true);  //attach callback
+          timerAlarmWrite(timer, wdtTimeout * 500, false); //set time in us
+          timerAlarmEnable(timer);
+        }
+      }
 
-    if (Vario_al_secondo < soglia_positivo && Vario_al_secondo > -soglia_negativo) {
-      if (state_disc == true) {
-        if (millis() - loopTimeSuonoFalse > 1000) {
-          loopTimeSuonoFalse = millis(); // reset
+      if (Vario_al_secondo < soglia_positivo && Vario_al_secondo > -soglia_negativo) {
+        if (state_disc == true) {
+          if (millis() - loopTimeSuonoFalse > 1000) {
+            loopTimeSuonoFalse = millis(); // reset
 
-          ledcWriteTone(channel, 0);
-          state_disc = false;
+            ledcWriteTone(channel, 0);
+            state_disc = false;
 
+          }
         }
       }
     }
   }
+  s++;
+  if (s >= media) s = media;
   count++;
 
 
