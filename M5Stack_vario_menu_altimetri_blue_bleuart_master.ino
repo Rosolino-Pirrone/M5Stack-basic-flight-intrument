@@ -1289,7 +1289,7 @@ void loop() {
           M5.Lcd.print("Bluetooth");
           Serial.print("Bluetooth=");
           Serial.print(bluetooth);
-          Serial.println(". B to change");
+          Serial.println(".Button B to change");
           M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
           M5.Lcd.setCursor(0, 150);
           M5.Lcd.print("GPS serial monitor");
