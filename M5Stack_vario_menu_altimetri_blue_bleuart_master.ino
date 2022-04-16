@@ -294,61 +294,7 @@ void stringaBle( void * parameter ) {
     stringaBleUart.remove(0, 20);
   }
 
-  if ((FIX == true) && (new_nmea == true)) {
-    //Serial.println(millis());
-    //Serial.println("FIX == true);
-    parse_nmea = NMEA_RMC;
-    for (int i = 0; i < 9; i++)
-    {
-      q = parse_nmea.indexOf(",");
-      parse_nmea.remove(0, (q + 1)) ;
-    }
-    q = parse_nmea.indexOf(",");
-    parse_nmea.remove(q);
-    String date_log = parse_nmea;
-
-    String date_nome_file;
-    File root = SD.open("/");
-    file = root.openNextFile();
-    date_nome_file = file.name();
-
-    while (file) {
-      date_nome_file = file.name();
-      file = root.openNextFile();
-
-    }
-
-    date_nome_file.remove(0,  1) ;
-    date_nome_file.remove(6);
-    int c = !date_nome_file.equals(date_log);
-
-    if (!date_nome_file.equals(date_log)) {
-      file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_WRITE);
-      delay(5);
-      other_number = true;
-    } else {
-      for (int i = 0; i < 30; i++) {
-        if (!SD.exists("/" + date_log + String(i) + ".nmea") && other_number == false) {
-          file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_WRITE);
-          delay(5);
-          file_number = i;
-          other_number = true;
-        }
-
-      }
-
-    }
-
-    file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_APPEND);
-    file.print(NMEA_RMC + "\n");
-    file.print(NMEA_GGA + "\n");
-    //file.flush();
-    file.close();
-
-    //listDir(SD, "/", 0);
-
-    //Serial.println(millis());
-  }
+  
 
   vTaskDelete( NULL );
 }
