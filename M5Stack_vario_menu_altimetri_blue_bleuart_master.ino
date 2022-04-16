@@ -848,7 +848,7 @@ void loop() {
       loopTime_2 = millis();
       Serial.print(NMEA_GGA);
       Serial.print(NMEA_RMC);
-
+      if (bluetooth == true) {
       //Serial.println("stringaBle");
       //NMEA_GGA += NMEA_RMC;
       xTaskCreate(
