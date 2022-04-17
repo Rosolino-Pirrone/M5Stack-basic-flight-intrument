@@ -192,7 +192,7 @@ float Vario_al_secondo = 0;
 float altitudine = 0;
 unsigned long previousMillis_velocita = 0;
 
-String last_rmc_1;
+String last_gga_1;
 String NMEA_RMC;
 String NMEA_GGA;
 bool FIX = false;
@@ -200,6 +200,8 @@ bool new_nmea = false;
 static int taskCore = 1;
 String parse_nmea;
 int q;
+bool verifyFile = false;
+String stringaMtk;
 
 int file_number = 0;
 bool other_number = false;
@@ -294,7 +296,7 @@ void stringaBle( void * parameter ) {
     stringaBleUart.remove(0, 20);
   }
 
-  
+
 
   vTaskDelete( NULL );
 }
@@ -326,7 +328,7 @@ void IRAM_ATTR suonoVarioDiscendenza() {
 
 //////////////////     Datalog GPS      //////////////////
 
-void coreTask( void * pvParameters ) {
+/*void coreTask( void * pvParameters ) {
   delay(1000);
 
   while (true) {
@@ -387,7 +389,7 @@ void coreTask( void * pvParameters ) {
       //Serial.println(millis());
     }
   }
-}
+  }*/
 
 
 void setup() {
@@ -404,20 +406,47 @@ void setup() {
   //M5.Power.setWakeupButton(2);
   //M5.Power.setPowerBoostKeepOn(1);
   delay(100);
+  Serial.println("setAutoBootOnLoad");
+  M5.Power.setAutoBootOnLoad(true);
+  Serial.print("REG-SYS-CTL0 = ");
+  Serial.println(M5.Power.getCTL0());
+  delay(100);
+  Serial.print("REG-SYS-CTL1 = ");
+  Serial.println(M5.Power.getCTL1());
+
+  //- REG_CTL0
+#define BOOST_ENABLE_BIT (0x20)
+#define CHARGE_OUT_BIT (0x10)
+#define BOOT_ON_LOAD_BIT (0x04)
+#define BOOST_OUT_BIT (0x02)
+#define BOOST_BUTTON_EN_BIT (0x01)
+  delay(100);
+  Serial.print("getREGCTL0 BOOT_ON_LOAD_BIT = ");
+  Serial.println(M5.Power.getREGCTL0(BOOT_ON_LOAD_BIT));
+
+  //- REG_CTL1
+#define BOOST_SET_BIT (0x80)
+#define WLED_SET_BIT (0x40)
+#define SHORT_BOOST_BIT (0x20)
+#define VIN_ENABLE_BIT (0x04)
+  delay(100);
+  Serial.print("getREGCTL1 VIN_ENABLE_BIT = ");
+  Serial.println(M5.Power.getREGCTL1(VIN_ENABLE_BIT));
+
   //Serial.begin(115200);
 
   ledcSetup(channel, freq, resolution);
   ledcAttachPin(25, channel);
-  ledcWriteTone(channel, 1000);
-  delay(125);
-  ledcWriteTone(channel, 0);
-  ledcWriteTone(channel, 750);
-  delay(125);
-  ledcWriteTone(channel, 0);
-  ledcWriteTone(channel, 500);
-  delay(125);
-  ledcWriteTone(channel, 0);
-  delay(125);
+  /*ledcWriteTone(channel, 1000);
+    delay(125);
+    ledcWriteTone(channel, 0);
+    ledcWriteTone(channel, 750);
+    delay(125);
+    ledcWriteTone(channel, 0);
+    ledcWriteTone(channel, 500);
+    delay(125);
+    ledcWriteTone(channel, 0);
+    delay(125);*/
 
   Serial.println("Starting Arduvario BLE Client application...");
 
@@ -569,21 +598,21 @@ void setup() {
   delay(1000);
   //Serial.print("Tempo = ");
   //Serial.println(millis());
-  if (bluetooth == false) {
-    xTaskCreatePinnedToCore(
-      coreTask,   /* Function to implement the task */
-      "coreTask", /* Name of the task */
-      10000,      /* Stack size in words */
-      NULL,       /* Task input parameter */
-      0,          /* Priority of the task */
-      NULL,       /* Task handle. */
-      taskCore);  /* Core where the task should run */
+  //if (bluetooth == false) {
+  //xTaskCreatePinnedToCore(
+  //coreTask,   /* Function to implement the task */
+  //"coreTask", /* Name of the task */
+  //10000,      /* Stack size in words */
+  //NULL,       /* Task input parameter */
+  //0,          /* Priority of the task */
+  //NULL,       /* Task handle. */
+  //taskCore);  /* Core where the task should run */
 
-    Serial.println("Task created...");
-    /*M5.Lcd.setBrightness(0);
-      M5.Lcd.sleep();*/
-  }
+  //Serial.println("Task created...");
+  /*M5.Lcd.setBrightness(0);
+    M5.Lcd.sleep();*/
 }
+
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
   Serial.printf("Listing directory: %s\n", dirname);
 
@@ -615,7 +644,7 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
   }
 }
 
-String stringaMtk;
+
 
 
 
@@ -635,28 +664,7 @@ void loop() {
     }
   }
 
-  String RMC = ("GNRMC," + String(rmc_1.value()) + "," + rmc_2.value() + "," + String(rmc_3.value()) + "," + rmc_4.value() + "," + String(rmc_5.value()) + "," + rmc_6.value() + "," + String(rmc_7.value()) + "," + String(rmc_8.value()) + "," + String(rmc_9.value()) + "," + String(rmc_10.value()) + "," + String(rmc_11.value()) + "," + rmc_12.value() + ",");
-  String checkSum_2 = String(checkSum(RMC), HEX);
-  NMEA_RMC = ("$" + RMC + "*" + checkSum_2 + "\n");
-  //Serial.print(NMEA_RMC);
-  //if (bluetooth == true) SerialBT.println(NMEA_RMC);
-  int n = 0;
-  //Serial.print("T1= ");
-  //Serial.println(millis());
 
-  /*if (connected) {
-
-      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(0, 20).c_str(), NMEA_RMC.substring(0, 20).length());
-      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(20, 40).c_str(), NMEA_RMC.substring(20, 40).length());
-      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(40, 60).c_str(), NMEA_RMC.substring(40, 60).length());
-      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(60, 80).c_str(), NMEA_RMC.substring(60, 80).length());
-      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(80, 100).c_str(), NMEA_RMC.substring(80, 100).length());
-      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(100, 120).c_str(), NMEA_RMC.substring(100, 120).length());
-
-
-      } else if (doScan) {
-      BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
-      }*/
   //Serial.print("T1= ");
   //Serial.println(millis());
 
@@ -681,6 +689,31 @@ void loop() {
       } else if (doScan) {
       BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
       }*/
+
+  String RMC = ("GNRMC," + String(rmc_1.value()) + "," + rmc_2.value() + "," + String(rmc_3.value()) + "," + rmc_4.value() + "," + String(rmc_5.value()) + "," + rmc_6.value() + "," + String(rmc_7.value()) + "," + String(rmc_8.value()) + "," + String(rmc_9.value()) + "," + String(rmc_10.value()) + "," + String(rmc_11.value()) + "," + rmc_12.value() + ",");
+  String checkSum_2 = String(checkSum(RMC), HEX);
+  NMEA_RMC = ("$" + RMC + "*" + checkSum_2 + "\n");
+  //Serial.print(NMEA_RMC);
+  //if (bluetooth == true) SerialBT.println(NMEA_RMC);
+  int n = 0;
+  //Serial.print("T1= ");
+  //Serial.println(millis());
+
+  /*if (connected) {
+
+      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(0, 20).c_str(), NMEA_RMC.substring(0, 20).length());
+      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(20, 40).c_str(), NMEA_RMC.substring(20, 40).length());
+      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(40, 60).c_str(), NMEA_RMC.substring(40, 60).length());
+      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(60, 80).c_str(), NMEA_RMC.substring(60, 80).length());
+      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(80, 100).c_str(), NMEA_RMC.substring(80, 100).length());
+      pRemoteCharacteristic->writeValue(NMEA_RMC.substring(100, 120).c_str(), NMEA_RMC.substring(100, 120).length());
+
+
+      } else if (doScan) {
+      BLEDevice::getScan()->start(0);  // this is just example to start scan after disconnect, most likely there is better way to do it in arduino
+      }*/
+
+
   //Serial.print("T2= ");
   //Serial.println(millis());
   //Serial.println(rmc_1.isUpdated());
@@ -842,13 +875,15 @@ void loop() {
   stringaMtk = LK8EX1 + NMEA_GGA + NMEA_RMC + "Arduvario\n";
   //if (loopTime_2 > millis()) loopTime_2 = millis();
   //if (millis() - loopTime_2 > 1000) {
-  if (bluetooth == true) {
-    if (last_rmc_1 != String(rmc_1.value()))
-    {
-      loopTime_2 = millis();
-      Serial.print(NMEA_GGA);
-      Serial.print(NMEA_RMC);
-      if (bluetooth == true) {
+
+  if (last_gga_1 != String(gga_1.value()))
+  {
+    loopTime_2 = millis();
+
+    Serial.print(NMEA_GGA);
+    Serial.print(NMEA_RMC);
+    
+    if (bluetooth == true) {
       //Serial.println("stringaBle");
       //NMEA_GGA += NMEA_RMC;
       xTaskCreate(
@@ -859,7 +894,47 @@ void loop() {
         1,                         //* Priority of the task.
         NULL);                     //* Task handle.
     }
-    last_rmc_1 = String(rmc_1.value());
+
+    String parse_nmea = NMEA_RMC;
+    //Serial.println(parse_nmea);
+    int q = 0;
+    for (int i = 0; i < 9; i++)
+    {
+      q = parse_nmea.indexOf(",");
+      parse_nmea.remove(0, (q + 1)) ;
+    }
+    q = parse_nmea.indexOf(",");
+    parse_nmea.remove(q);
+    String date_log = parse_nmea;
+    String newFile = ("/" + date_log + ".nmea");
+
+
+    String date_nome_last_file;
+
+
+    if (verifyFile == false) {
+      date_nome_last_file = file.name();
+
+
+      if (!SD.exists(newFile)) {
+        File file = SD.open(newFile, FILE_WRITE);
+        delay(5);
+        file.close();
+
+      }
+      verifyFile = true;
+
+    }
+    //else  {
+    //file = SD.open(newFile, FILE_APPEND);
+    //file.print(stringaMtk);
+    //}
+    File file = SD.open(newFile, FILE_APPEND);
+    file.print(NMEA_GGA + NMEA_RMC);
+
+
+
+    last_gga_1 = String(gga_1.value());
   }
   //Serial.println("$LK8EX1,99860,99999,9999,25,1000,*12");
   //if (bluetooth == true) SerialBT.println("$" + cmd_1 + "*" + checkSum2);
@@ -1253,42 +1328,42 @@ void loop() {
             M5.Lcd.setCursor(125, 220);
             M5.Lcd.print("      ");
             //if (bluetooth == false) {
-              while (1) {
-                M5.update();
-                M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
-                M5.Lcd.setCursor(200, 125);
-                M5.Lcd.print("On ");
-                M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
-                M5.Lcd.setCursor(0, 180);
-                Serial.print("Bluetooth=" + String(bluetooth) + ". ");
-                M5.Lcd.print("Do you whant restart?");
-                Serial.println("Do you whant change end restart? Button B to yes or button C to no");
+            while (1) {
+              M5.update();
+              M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
+              M5.Lcd.setCursor(200, 125);
+              M5.Lcd.print("On ");
+              M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
+              M5.Lcd.setCursor(0, 180);
+              Serial.print("Bluetooth=" + String(bluetooth) + ". ");
+              M5.Lcd.print("Do you whant restart?");
+              Serial.println("Do you whant change end restart? Button B to yes or button C to no");
 
-                M5.Lcd.setCursor(145, 220);
-                M5.Lcd.print("YES");
-                M5.Lcd.setCursor(240, 220);
-                M5.Lcd.print("Off");
+              M5.Lcd.setCursor(145, 220);
+              M5.Lcd.print("YES");
+              M5.Lcd.setCursor(240, 220);
+              M5.Lcd.print("Off");
 
-                if (M5.BtnB.wasReleased()) {
+              if (M5.BtnB.wasReleased()) {
 
-                  bluetooth = !bluetooth;
-                  EEPROM.write(6, bluetooth);
-                  EEPROM.commit();
-                  ESP.restart();
+                bluetooth = !bluetooth;
+                EEPROM.write(6, bluetooth);
+                EEPROM.commit();
+                ESP.restart();
 
-                }
-                if (M5.BtnC.wasReleased()) {
-                  M5.Lcd.fillScreen(TFT_BLACK);
-                  break;
-                }
               }
-            //} 
+              if (M5.BtnC.wasReleased()) {
+                M5.Lcd.fillScreen(TFT_BLACK);
+                break;
+              }
+            }
+            //}
             /*else {
               bluetooth = !bluetooth;
               EEPROM.write(6, bluetooth);
               EEPROM.commit();
               //if (bluetooth == false) SerialBT.end();
-            }*/
+              }*/
 
           }
           break;
