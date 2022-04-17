@@ -303,7 +303,7 @@ void setup() {
 
   ledcSetup(channel, freq, resolution);
   ledcAttachPin(25, channel);
-  /*ledcWriteTone(channel, 1000);
+  ledcWriteTone(channel, 1000);
     delay(125);
     ledcWriteTone(channel, 0);
     ledcWriteTone(channel, 750);
@@ -312,7 +312,7 @@ void setup() {
     ledcWriteTone(channel, 500);
     delay(125);
     ledcWriteTone(channel, 0);
-    delay(125);*/
+    delay(125);
 
   ss.begin(9600);
   EEPROM.begin(EEPROM_SIZE);
