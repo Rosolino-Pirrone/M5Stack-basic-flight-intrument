@@ -88,7 +88,7 @@ float Vario_al_secondo = 0;
 float altitudine = 0;
 unsigned long previousMillis_velocita = 0;
 
-String last_rmc_1;
+String last_gga_1;
 String NMEA_RMC;
 String NMEA_GGA;
 bool FIX = false;
@@ -537,22 +537,7 @@ void loop() {
   //if (rmc_1.isUpdated() ||  gga_1.isUpdated())
   //{
 
-  String RMC = ("GNRMC," + String(rmc_1.value()) + "," + rmc_2.value() + "," + String(rmc_3.value()) + "," + rmc_4.value() + "," + String(rmc_5.value()) + "," + rmc_6.value() + "," + String(rmc_7.value()) + "," + String(rmc_8.value()) + "," + String(rmc_9.value()) + "," + String(rmc_10.value()) + "," + String(rmc_11.value()) + "," + rmc_12.value() + ",");
-  String checkSum_2 = String(checkSum(RMC), HEX);
-  NMEA_RMC = ("$" + RMC + "*" + checkSum_2 + "\n");
-  //Serial.print(NMEA_RMC);
-  //if (bluetooth == true) SerialBT.println(NMEA_RMC);
-  int n = 0;
-  /*n = NMEA_RMC.length();
-    char NMEA_RMCc[n + 1];
-    strcpy(NMEA_RMCc, NMEA_RMC.c_str());
-    //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
-    if (deviceConnected) {
-    pTxCharacteristic->setValue(NMEA_RMCc);
-    pTxCharacteristic->notify();
-
-    //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
-    }*/
+  
 
 
 
@@ -570,6 +555,24 @@ void loop() {
      pTxCharacteristic->notify();
 
      //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
+    }*/
+  
+  
+  String RMC = ("GNRMC," + String(rmc_1.value()) + "," + rmc_2.value() + "," + String(rmc_3.value()) + "," + rmc_4.value() + "," + String(rmc_5.value()) + "," + rmc_6.value() + "," + String(rmc_7.value()) + "," + String(rmc_8.value()) + "," + String(rmc_9.value()) + "," + String(rmc_10.value()) + "," + String(rmc_11.value()) + "," + rmc_12.value() + ",");
+  String checkSum_2 = String(checkSum(RMC), HEX);
+  NMEA_RMC = ("$" + RMC + "*" + checkSum_2 + "\n");
+  //Serial.print(NMEA_RMC);
+  //if (bluetooth == true) SerialBT.println(NMEA_RMC);
+  int n = 0;
+  /*n = NMEA_RMC.length();
+    char NMEA_RMCc[n + 1];
+    strcpy(NMEA_RMCc, NMEA_RMC.c_str());
+    //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
+    if (deviceConnected) {
+    pTxCharacteristic->setValue(NMEA_RMCc);
+    pTxCharacteristic->notify();
+
+    //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
     }*/
 
 
@@ -741,7 +744,7 @@ void loop() {
 
   stringaMtk = NMEA_RMC + NMEA_GGA + "Arduvario\n";
 
-  if (last_rmc_1 != String(rmc_1.value()))
+  if (last_gga_1 != String(gga_1.value()))
   {
 
     Serial.print(NMEA_GGA);
@@ -758,7 +761,7 @@ void loop() {
 
 
 
-    String parse_nmea = stringaMtk;
+    String parse_nmea = NMEA_RMC;
     //Serial.println(parse_nmea);
     int q = 0;
     for (int i = 0; i < 9; i++)
@@ -795,7 +798,7 @@ void loop() {
     File file = SD.open(newFile, FILE_APPEND);
     file.print(NMEA_GGA + NMEA_RMC);
 
-    last_rmc_1 = String(rmc_1.value());
+    last_gga_1 = String(gga_1.value());
   }
 
 
