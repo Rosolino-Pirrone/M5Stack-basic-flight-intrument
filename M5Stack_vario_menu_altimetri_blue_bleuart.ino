@@ -759,7 +759,7 @@ void loop() {
 
 
     String parse_nmea = stringaMtk;
-    Serial.println(parse_nmea);
+    //Serial.println(parse_nmea);
     int q = 0;
     for (int i = 0; i < 9; i++)
     {
