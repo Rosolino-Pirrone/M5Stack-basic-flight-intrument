@@ -96,6 +96,8 @@ bool new_nmea = false;
 static int taskCore = 1;
 String parse_nmea;
 int q;
+bool verifyFile = false;
+String stringaMtk;
 
 int file_number = 0;
 bool other_number = false;
@@ -158,7 +160,7 @@ float Periodo_beep = 0;
 float Tono_beep = 0;
 float Durata_beep;
 float Tono_beep_disc;
-
+int s = 0;
 
 
 //////////////////     Funzione interrupt suono      //////////////////
@@ -246,6 +248,42 @@ void coreTask( void * pvParameters ) {
   }
 }
 
+void datalogFunction( void * parameter ) {
+
+  String stringaDatalog = *((String*)parameter);
+  String parse_nmea = stringaDatalog;
+  Serial.println(parse_nmea);
+  int q = 0;
+  for (int i = 0; i < 9; i++)
+  {
+    q = parse_nmea.indexOf(",");
+    parse_nmea.remove(0, (q + 1)) ;
+  }
+  q = parse_nmea.indexOf(",");
+  parse_nmea.remove(q);
+  String date_log = parse_nmea;
+
+  String date_nome_last_file;
+  //File root = SD.open("/");
+  //file = root.openNextFile();
+  date_nome_last_file = file.name();
+  Serial.println(date_nome_last_file);
+  //String date_nome_last_file_append = ("/" + date_nome_last_file);
+  String newFile = ("/" + date_log + ".nmea");
+  Serial.println(newFile);
+  if (date_nome_last_file != newFile) {
+    file = SD.open(newFile, FILE_WRITE);
+  }
+  else  {
+    file = SD.open(date_nome_last_file, FILE_APPEND);
+    file.print(stringaDatalog);
+  }
+
+  vTaskDelete( NULL );
+}
+
+
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -265,16 +303,16 @@ void setup() {
 
   ledcSetup(channel, freq, resolution);
   ledcAttachPin(25, channel);
-  ledcWriteTone(channel, 1000);
-  delay(125);
-  ledcWriteTone(channel, 0);
-  ledcWriteTone(channel, 750);
-  delay(125);
-  ledcWriteTone(channel, 0);
-  ledcWriteTone(channel, 500);
-  delay(125);
-  ledcWriteTone(channel, 0);
-  delay(125);
+  /*ledcWriteTone(channel, 1000);
+    delay(125);
+    ledcWriteTone(channel, 0);
+    ledcWriteTone(channel, 750);
+    delay(125);
+    ledcWriteTone(channel, 0);
+    ledcWriteTone(channel, 500);
+    delay(125);
+    ledcWriteTone(channel, 0);
+    delay(125);*/
 
   ss.begin(9600);
   EEPROM.begin(EEPROM_SIZE);
@@ -443,16 +481,16 @@ void setup() {
   //Serial.print("Tempo = ");
   //Serial.println(millis());
 
-  xTaskCreatePinnedToCore(
-    coreTask,   /* Function to implement the task */
-    "coreTask", /* Name of the task */
-    10000,      /* Stack size in words */
-    NULL,       /* Task input parameter */
-    0,          /* Priority of the task */
-    NULL,       /* Task handle. */
-    taskCore);  /* Core where the task should run */
+  // xTaskCreatePinnedToCore(
+  // coreTask,   /* Function to implement the task */
+  //"coreTask", /* Name of the task */
+  //10000,      /* Stack size in words */
+  //NULL,       /* Task input parameter */
+  // 0,          /* Priority of the task */
+  //NULL,       /* Task handle. */
+  //taskCore);  /* Core where the task should run */
 
-  Serial.println("Task created...");
+  //Serial.println("Task created...");
   /*M5.Lcd.setBrightness(0);
     M5.Lcd.sleep();*/
 
@@ -499,7 +537,6 @@ void loop() {
   //if (rmc_1.isUpdated() ||  gga_1.isUpdated())
   //{
 
-
   String RMC = ("GNRMC," + String(rmc_1.value()) + "," + rmc_2.value() + "," + String(rmc_3.value()) + "," + rmc_4.value() + "," + String(rmc_5.value()) + "," + rmc_6.value() + "," + String(rmc_7.value()) + "," + String(rmc_8.value()) + "," + String(rmc_9.value()) + "," + String(rmc_10.value()) + "," + String(rmc_11.value()) + "," + rmc_12.value() + ",");
   String checkSum_2 = String(checkSum(RMC), HEX);
   NMEA_RMC = ("$" + RMC + "*" + checkSum_2 + "\n");
@@ -518,6 +555,7 @@ void loop() {
     }*/
 
 
+
   String GGA = ("GNGGA," + String(gga_1.value()) + "," + String(gga_2.value()) + "," + gga_3.value() + "," + String(gga_4.value()) + "," + gga_5.value() + "," + String(gga_6.value()) + "," + String(gga_7.value()) + "," + String(gga_8.value()) + "," + String(gga_9.value()) + "," + String(gga_10.value()) + "," + String(gga_11.value()) + "," + String(gga_12.value()) + "," + String(gga_13.value()) + ",");
   String checkSum_ = String(checkSum(GGA), HEX);
   NMEA_GGA = ("$" + GGA + "*" + checkSum_ + "\n");
@@ -533,6 +571,8 @@ void loop() {
 
      //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
     }*/
+
+
   new_nmea = true;
   parse_nmea = NMEA_RMC;
 
@@ -699,19 +739,69 @@ void loop() {
     }
   }
 
+  stringaMtk = NMEA_RMC + NMEA_GGA + "Arduvario\n";
+
   if (last_rmc_1 != String(rmc_1.value()))
   {
 
     Serial.print(NMEA_GGA);
     Serial.print(NMEA_RMC);
+    /*if (bluetooth == false) {
+        xTaskCreate(
+          datalogFunction,             //* Task function.
+          "datalogFunction",           //* String with name of task.
+          10000,                     //* Stack size in words.
+          (void*)&stringaMtk,      //* Parameter passed as input of the task
+          1,                         //* Priority of the task.
+          NULL);                     //* Task handle.
+      }*/
+
+
+
+    String parse_nmea = stringaMtk;
+    Serial.println(parse_nmea);
+    int q = 0;
+    for (int i = 0; i < 9; i++)
+    {
+      q = parse_nmea.indexOf(",");
+      parse_nmea.remove(0, (q + 1)) ;
+    }
+    q = parse_nmea.indexOf(",");
+    parse_nmea.remove(q);
+    String date_log = parse_nmea;
+    String newFile = ("/" + date_log + ".nmea");
+
+
+    String date_nome_last_file;
+
+
+    if (verifyFile == false) {
+      date_nome_last_file = file.name();
+
+
+      if (!SD.exists(newFile)) {
+        File file = SD.open(newFile, FILE_WRITE);
+        delay(5);
+        file.close();
+
+      }
+      verifyFile = true;
+
+    }
+    //else  {
+    //file = SD.open(newFile, FILE_APPEND);
+    //file.print(stringaMtk);
+    //}
+    File file = SD.open(newFile, FILE_APPEND);
+    file.print(NMEA_GGA + NMEA_RMC);
 
     last_rmc_1 = String(rmc_1.value());
   }
-  //somma = 0;
+
+
 
   count = -1;
 
-  //}
   somma = 0;
   new_nmea = false;
   ///////////////////////////////////////////////////////// Menu //////////////////////////////////////////////
@@ -1233,67 +1323,71 @@ void loop() {
 
 
   if (suono == 1) {
-    if (Vario_al_secondo >= soglia_positivo) {
+    if (s >= media) {
+      if (Vario_al_secondo >= soglia_positivo) {
 
-      if (state == false)
-      {
-        if (state_disc == true) {
-          ledcWriteTone(channel, 0);
-          state_disc = false;
+        if (state == false)
+        {
+          if (state_disc == true) {
+            ledcWriteTone(channel, 0);
+            state_disc = false;
 
+          }
+          if (millis() - loopTimeVario > Periodo_beep) {
+            loopTimeVario = millis(); // reset the timer
+            timerAttachInterrupt(timer, &suonoVario, true);  //attach callback
+            timerAlarmWrite(timer, wdtTimeout * 500, false); //set time in us
+            timerAlarmEnable(timer);                          //enable interrupt
+            //state = true;
+            //Serial.println("state true");
+          }
         }
+      }
+
+      if (state == true) {
         if (millis() - loopTimeVario > Periodo_beep) {
           loopTimeVario = millis(); // reset the timer
-          timerAttachInterrupt(timer, &suonoVario, true);  //attach callback
-          timerAlarmWrite(timer, wdtTimeout * 500, false); //set time in us
-          timerAlarmEnable(timer);                          //enable interrupt
-          //state = true;
-          //Serial.println("state true");
+          ledcWriteTone(channel, 0);
+          state = false;
+
         }
       }
-    }
-
-    if (state == true) {
-      if (millis() - loopTimeVario > Periodo_beep) {
-        loopTimeVario = millis(); // reset the timer
-        ledcWriteTone(channel, 0);
-        state = false;
-
-      }
-    }
 
 
-    if (Vario_al_secondo <= -soglia_negativo && state_disc == false)
-    {
+      if (Vario_al_secondo <= -soglia_negativo && state_disc == false)
+      {
 
 
-      timerAttachInterrupt(timer, &suonoVarioDiscendenza, true);  //attach callback
-      timerAlarmWrite(timer, wdtTimeout * 500, false); //set time in us
-      timerAlarmEnable(timer);                          //enable interrupt
-
-
-    }
-    else if (Vario_al_secondo <= -soglia_negativo && state_disc == true) {
-      if (millis() - loopTimeSuonoFalse > 333) {
-        loopTimeSuonoFalse = millis(); // reset the
         timerAttachInterrupt(timer, &suonoVarioDiscendenza, true);  //attach callback
         timerAlarmWrite(timer, wdtTimeout * 500, false); //set time in us
-        timerAlarmEnable(timer);
+        timerAlarmEnable(timer);                          //enable interrupt
+
+
       }
-    }
+      else if (Vario_al_secondo <= -soglia_negativo && state_disc == true) {
+        if (millis() - loopTimeSuonoFalse > 333) {
+          loopTimeSuonoFalse = millis(); // reset the
+          timerAttachInterrupt(timer, &suonoVarioDiscendenza, true);  //attach callback
+          timerAlarmWrite(timer, wdtTimeout * 500, false); //set time in us
+          timerAlarmEnable(timer);
+        }
+      }
 
-    if (Vario_al_secondo < soglia_positivo && Vario_al_secondo > -soglia_negativo) {
-      if (state_disc == true) {
-        if (millis() - loopTimeSuonoFalse > 1000) {
-          loopTimeSuonoFalse = millis(); // reset
+      if (Vario_al_secondo < soglia_positivo && Vario_al_secondo > -soglia_negativo) {
+        if (state_disc == true) {
+          if (millis() - loopTimeSuonoFalse > 1000) {
+            loopTimeSuonoFalse = millis(); // reset
 
-          ledcWriteTone(channel, 0);
-          state_disc = false;
+            ledcWriteTone(channel, 0);
+            state_disc = false;
 
+          }
         }
       }
     }
   }
+  s++;
+  if (s >= media) s = media;
   count++;
 
 
