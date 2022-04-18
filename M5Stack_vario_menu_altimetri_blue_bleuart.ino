@@ -202,9 +202,9 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
   }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////        setup        //////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////        setup        //////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void setup() {
   // put your setup code here, to run once:
@@ -223,6 +223,17 @@ void setup() {
   ledcSetup(channel, freq, resolution);
   ledcAttachPin(25, channel);
 
+
+  EEPROM.begin(EEPROM_SIZE);
+  suono = EEPROM.read(0);
+  soglia_pos = EEPROM.read(1);
+  soglia_neg = EEPROM.read(2);
+  media = EEPROM.read(3);
+  q_2 = EEPROM.get(3, q_2);
+  bluetooth = EEPROM.read(6);
+  delay(125);
+
+  //if (suono == 1) {
   ledcWriteTone(channel, 1000);
   delay(125);
   ledcWriteTone(channel, 0);
@@ -233,15 +244,7 @@ void setup() {
   delay(125);
   ledcWriteTone(channel, 0);
   delay(125);
-
-  EEPROM.begin(EEPROM_SIZE);
-  suono = EEPROM.read(0);
-  soglia_pos = EEPROM.read(1);
-  soglia_neg = EEPROM.read(2);
-  media = EEPROM.read(3);
-  q_2 = EEPROM.get(3, q_2);
-  bluetooth = EEPROM.read(6);
-  delay(125);
+  //}
 
   if (bluetooth == true) {
     Serial.println("The device started, now you can pair it with bluetooth!");
@@ -423,6 +426,7 @@ void loop() {
   }
   q = parse_nmea.indexOf(",");
   parse_nmea.remove(q);
+
   if (parse_nmea == "A") FIX = true;
   else FIX = false;
   //FIX = true;
@@ -494,14 +498,16 @@ void loop() {
   //Serial.println("$LK8EX1,99860,99999,9999,25,1000,*12");
   //if (bluetooth == true) SerialBT.println("$" + cmd_1 + "*" + checkSum2);
   if (bluetooth == true) {
-    if (deviceConnected) {
-      pTxCharacteristic->setValue(LK8EX1.substring(0, 20).c_str());
-      pTxCharacteristic->notify();
+    if (s >= media) {
+      if (deviceConnected) {
+        pTxCharacteristic->setValue(LK8EX1.substring(0, 20).c_str());
+        pTxCharacteristic->notify();
 
-      pTxCharacteristic->setValue(LK8EX1.substring(20).c_str());
-      pTxCharacteristic->notify();
+        pTxCharacteristic->setValue(LK8EX1.substring(20).c_str());
+        pTxCharacteristic->notify();
 
-      //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
+        //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
+      }
     }
   }
 
@@ -513,37 +519,41 @@ void loop() {
     Serial.print(NMEA_GGA);
     Serial.print(NMEA_RMC);
 
-    String parse_nmea = NMEA_RMC;
-    //Serial.println(parse_nmea);
-    int q = 0;
-    for (int i = 0; i < 9; i++)
-    {
-      q = parse_nmea.indexOf(",");
-      parse_nmea.remove(0, (q + 1)) ;
-    }
-    q = parse_nmea.indexOf(",");
-    parse_nmea.remove(q);
-    String date_log = parse_nmea;
-    String newFile = ("/" + date_log + ".nmea");
-    String date_nome_last_file;
-
-    if (verifyFile == false) {
-      date_nome_last_file = file.name();
-
-      if (!SD.exists(newFile)) {
-        File file = SD.open(newFile, FILE_WRITE);
-        delay(5);
-        file.close();
+    if (FIX == true) {
+      String parse_nmea = NMEA_RMC;
+      //Serial.println(parse_nmea);
+      int q = 0;
+      for (int i = 0; i < 9; i++)
+      {
+        q = parse_nmea.indexOf(",");
+        parse_nmea.remove(0, (q + 1)) ;
       }
-      verifyFile = true;
-    }
+      q = parse_nmea.indexOf(",");
+      parse_nmea.remove(q);
+      String date_log = parse_nmea;
+      String newFile = ("/" + date_log + ".nmea");
+      String date_nome_last_file;
 
-    File file = SD.open(newFile, FILE_APPEND);
-    file.print(NMEA_GGA + NMEA_RMC);
+      if (verifyFile == false) {
+        date_nome_last_file = file.name();
+
+        if (!SD.exists(newFile)) {
+          File file = SD.open(newFile, FILE_WRITE);
+          delay(5);
+          file.close();
+        }
+        verifyFile = true;
+      }
+
+      File file = SD.open(newFile, FILE_APPEND);
+      file.print(NMEA_GGA + NMEA_RMC);
+
+    }
     last_gga_1 = String(gga_1.value());
   }
 
-  
+
+
   somma = 0;
   new_nmea = false;
 
@@ -553,7 +563,11 @@ void loop() {
     //M5.Lcd.wakeup();//listDir(SD, "/", 0);
   } else if (M5.BtnB.wasReleased()) {
     if (FIX == 0)M5.Speaker.beep();
-    else M5.Speaker.tone(2000, 200);
+    else {
+      ledcWriteTone(channel, 750);
+      delay(75);
+      ledcWriteTone(channel, 0);
+    }
     Serial.print("FIX ");
     Serial.println(FIX);
     Serial.print("Battery ");
@@ -1121,7 +1135,7 @@ void loop() {
   s++;
 
   if (s >= media) s = media;
-  
+
 
   while (ss.available() > 0)
     gps.encode(ss.read());
