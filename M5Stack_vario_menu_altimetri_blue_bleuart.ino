@@ -3,19 +3,7 @@
 #include <Wire.h>
 #include <math.h>
 #include <EEPROM.h>
-
 #include "esp_system.h"
-/*#include "BluetoothSerial.h"
-
-  #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
-  #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
-  #endif
-
-  BluetoothSerial SerialBT;
-
-*/
-
-
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
@@ -26,9 +14,6 @@ BLECharacteristic *pTxCharacteristic;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
-
-// See the following for generating UUIDs:
-// https://www.uuidgenerator.net/
 
 #define SERVICE_UUID           "6E400001-B5A3-F393-E0A9-E50E24DCCA9E" // UART service UUID
 #define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
@@ -79,7 +64,7 @@ float P;
 float Valori[2];
 float valori_alt[150];
 float Media_P;
-int count = 0;
+
 
 float somma = 0;
 long loopTime = millis();
@@ -186,104 +171,40 @@ void IRAM_ATTR suonoVarioDiscendenza() {
   //Serial.println("state_disc = true");
 }
 
-void coreTask( void * pvParameters ) {
-  delay(1000);
+void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
+  Serial.printf("Listing directory: %s\n", dirname);
 
-  while (true) {
-    delay(2);
-    //if ((FIX == true) && (new_nmea == true)) {
-    //Serial.println(millis());
-    parse_nmea = NMEA_RMC;
-    for (int i = 0; i < 9; i++)
-    {
-      q = parse_nmea.indexOf(",");
-      parse_nmea.remove(0, (q + 1)) ;
-    }
-    q = parse_nmea.indexOf(",");
-    parse_nmea.remove(q);
-    String date_log = parse_nmea;
+  File root = fs.open(dirname);
+  if (!root) {
+    Serial.println("Failed to open directory");
+    return;
+  }
+  if (!root.isDirectory()) {
+    Serial.println("Not a directory");
+    return;
+  }
 
-    String date_nome_file;
-    File root = SD.open("/");
-    file = root.openNextFile();
-    date_nome_file = file.name();
-
-    while (file) {
-      date_nome_file = file.name();
-      file = root.openNextFile();
-
-    }
-
-    date_nome_file.remove(0,  1) ;
-    date_nome_file.remove(6);
-    int c = !date_nome_file.equals(date_log);
-
-    if (!date_nome_file.equals(date_log)) {
-      file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_WRITE);
-      delay(5);
-      other_number = true;
-    } else {
-      for (int i = 0; i < 30; i++) {
-        if (!SD.exists("/" + date_log + String(i) + ".nmea") && other_number == false) {
-          file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_WRITE);
-          delay(5);
-          file_number = i;
-          other_number = true;
-        }
-
+  File file = root.openNextFile();
+  while (file) {
+    if (file.isDirectory()) {
+      Serial.print("  DIR : ");
+      Serial.println(file.name());
+      if (levels) {
+        listDir(fs, file.name(), levels - 1);
       }
-
+    } else {
+      Serial.print("  FILE: ");
+      Serial.print(file.name());
+      Serial.print("  SIZE: ");
+      Serial.println(file.size());
     }
-
-    file = SD.open("/" + date_log + String(file_number) + ".nmea", FILE_APPEND);
-    file.print(NMEA_RMC + "\n");
-    file.print(NMEA_GGA + "\n");
-    //file.flush();
-    file.close();
-
-    //listDir(SD, "/", 0);
-
-    //Serial.println(millis());
-    //}
+    file = root.openNextFile();
   }
 }
 
-void datalogFunction( void * parameter ) {
-
-  String stringaDatalog = *((String*)parameter);
-  String parse_nmea = stringaDatalog;
-  Serial.println(parse_nmea);
-  int q = 0;
-  for (int i = 0; i < 9; i++)
-  {
-    q = parse_nmea.indexOf(",");
-    parse_nmea.remove(0, (q + 1)) ;
-  }
-  q = parse_nmea.indexOf(",");
-  parse_nmea.remove(q);
-  String date_log = parse_nmea;
-
-  String date_nome_last_file;
-  //File root = SD.open("/");
-  //file = root.openNextFile();
-  date_nome_last_file = file.name();
-  Serial.println(date_nome_last_file);
-  //String date_nome_last_file_append = ("/" + date_nome_last_file);
-  String newFile = ("/" + date_log + ".nmea");
-  Serial.println(newFile);
-  if (date_nome_last_file != newFile) {
-    file = SD.open(newFile, FILE_WRITE);
-  }
-  else  {
-    file = SD.open(date_nome_last_file, FILE_APPEND);
-    file.print(stringaDatalog);
-  }
-
-  vTaskDelete( NULL );
-}
-
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////        setup        //////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
 
 void setup() {
   // put your setup code here, to run once:
@@ -296,25 +217,23 @@ void setup() {
     M5.Speaker.beep();
   }
   M5.Power.begin();
-  //M5.Power.setWakeupButton(2);
-  //M5.Power.setPowerBoostKeepOn(1);
   delay(100);
-  //Serial.begin(115200);
+  ss.begin(9600);
 
   ledcSetup(channel, freq, resolution);
   ledcAttachPin(25, channel);
-  ledcWriteTone(channel, 1000);
-    delay(125);
-    ledcWriteTone(channel, 0);
-    ledcWriteTone(channel, 750);
-    delay(125);
-    ledcWriteTone(channel, 0);
-    ledcWriteTone(channel, 500);
-    delay(125);
-    ledcWriteTone(channel, 0);
-    delay(125);
 
-  ss.begin(9600);
+  ledcWriteTone(channel, 1000);
+  delay(125);
+  ledcWriteTone(channel, 0);
+  ledcWriteTone(channel, 750);
+  delay(125);
+  ledcWriteTone(channel, 0);
+  ledcWriteTone(channel, 500);
+  delay(125);
+  ledcWriteTone(channel, 0);
+  delay(125);
+
   EEPROM.begin(EEPROM_SIZE);
   suono = EEPROM.read(0);
   soglia_pos = EEPROM.read(1);
@@ -360,21 +279,14 @@ void setup() {
   }
 
 
-  //Serial2.begin(9600, SERIAL_8N1, 16, 17);
-
-  //if (bluetooth == true) SerialBT.begin("Arduvario"); //Bluetooth device name
-  //Serial.println("The device started, now you can pair it with bluetooth!");
-
-
-
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setTextColor(GREEN , BLACK);
   M5.Lcd.setTextSize(2);
   M5.Lcd.setCursor(0, 20);
   M5.Lcd.printf("Start Arduvario");
 
+  //delay(2000);
 
-  delay(2000);
   timer = timerBegin(0, 80, true);                  //timer 0, div 80
 
   //delay(5000);                                 // attendo 5s
@@ -476,104 +388,29 @@ void setup() {
   //Serial.print(" C_6: ");
   //Serial.println(C_6);
 
-
   delay(1000);
-  //Serial.print("Tempo = ");
-  //Serial.println(millis());
-
-  // xTaskCreatePinnedToCore(
-  // coreTask,   /* Function to implement the task */
-  //"coreTask", /* Name of the task */
-  //10000,      /* Stack size in words */
-  //NULL,       /* Task input parameter */
-  // 0,          /* Priority of the task */
-  //NULL,       /* Task handle. */
-  //taskCore);  /* Core where the task should run */
-
-  //Serial.println("Task created...");
-  /*M5.Lcd.setBrightness(0);
-    M5.Lcd.sleep();*/
 
 }
 
-void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
-  Serial.printf("Listing directory: %s\n", dirname);
-
-  File root = fs.open(dirname);
-  if (!root) {
-    Serial.println("Failed to open directory");
-    return;
-  }
-  if (!root.isDirectory()) {
-    Serial.println("Not a directory");
-    return;
-  }
-
-  File file = root.openNextFile();
-  while (file) {
-    if (file.isDirectory()) {
-      Serial.print("  DIR : ");
-      Serial.println(file.name());
-      if (levels) {
-        listDir(fs, file.name(), levels - 1);
-      }
-    } else {
-      Serial.print("  FILE: ");
-      Serial.print(file.name());
-      Serial.print("  SIZE: ");
-      Serial.println(file.size());
-    }
-    file = root.openNextFile();
-  }
-}
-
-
-
-
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////       loop       ////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void loop() {
   M5.update();
-
-  //if (rmc_1.isUpdated() ||  gga_1.isUpdated())
-  //{
-
-  
-
-
 
   String GGA = ("GNGGA," + String(gga_1.value()) + "," + String(gga_2.value()) + "," + gga_3.value() + "," + String(gga_4.value()) + "," + gga_5.value() + "," + String(gga_6.value()) + "," + String(gga_7.value()) + "," + String(gga_8.value()) + "," + String(gga_9.value()) + "," + String(gga_10.value()) + "," + String(gga_11.value()) + "," + String(gga_12.value()) + "," + String(gga_13.value()) + ",");
   String checkSum_ = String(checkSum(GGA), HEX);
   NMEA_GGA = ("$" + GGA + "*" + checkSum_ + "\n");
   //Serial.print(NMEA_GGA);
-  //if (bluetooth == true) SerialBT.println(NMEA_GGA);
-  /* n = NMEA_GGA.length();
-    char NMEA_GGAc[n + 1];
-    strcpy(NMEA_GGAc, NMEA_GGA.c_str());
-    //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
-    if (deviceConnected) {
-     pTxCharacteristic->setValue(NMEA_GGAc);
-     pTxCharacteristic->notify();
 
-     //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
-    }*/
-  
-  
+
+
   String RMC = ("GNRMC," + String(rmc_1.value()) + "," + rmc_2.value() + "," + String(rmc_3.value()) + "," + rmc_4.value() + "," + String(rmc_5.value()) + "," + rmc_6.value() + "," + String(rmc_7.value()) + "," + String(rmc_8.value()) + "," + String(rmc_9.value()) + "," + String(rmc_10.value()) + "," + String(rmc_11.value()) + "," + rmc_12.value() + ",");
   String checkSum_2 = String(checkSum(RMC), HEX);
   NMEA_RMC = ("$" + RMC + "*" + checkSum_2 + "\n");
   //Serial.print(NMEA_RMC);
-  //if (bluetooth == true) SerialBT.println(NMEA_RMC);
-  int n = 0;
-  /*n = NMEA_RMC.length();
-    char NMEA_RMCc[n + 1];
-    strcpy(NMEA_RMCc, NMEA_RMC.c_str());
-    //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
-    if (deviceConnected) {
-    pTxCharacteristic->setValue(NMEA_RMCc);
-    pTxCharacteristic->notify();
 
-    //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
-    }*/
 
 
   new_nmea = true;
@@ -589,64 +426,8 @@ void loop() {
   if (parse_nmea == "A") FIX = true;
   else FIX = false;
   //FIX = true;
-  //Serial.println(millis());
-  /*if (FIX == true) {
-    parse_nmea = NMEA_RMC;
-    for (int i = 0; i < 9; i++)
-    {
-      q = parse_nmea.indexOf(",");
-      parse_nmea.remove(0, (q + 1)) ;
-    }
-    q = parse_nmea.indexOf(",");
-    parse_nmea.remove(q);
-    String date_log = parse_nmea;
-    String date_nome_file;
-
-    File root = SD.open("/");
-    file = root.openNextFile();
-    date_nome_file = file.name();
-
-    while (file) {
-      date_nome_file = file.name();
-      file = root.openNextFile();
-
-    }
-
-    date_nome_file.remove(0,  1) ;
-    date_nome_file.remove(6);
-
-    if (!date_nome_file.equals(date_log)) {
-      file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
-      delay(5);
-      other_number = true;
-    } else {
-      for (int i = 0; i < 30; i++) {
-        if (!SD.exists("/" + date_log + String(i) + ".gpx") && other_number == false) {
-          file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
-          delay(5);
-          file_number = i;
-          other_number = true;
-        }
-
-      }
-
-    }
-
-    file = SD.open("/" + date_log + String(file_number) + ".gpx", FILE_APPEND);
-    file.print(NMEA_RMC + "\n");
-    file.print(NMEA_GGA + "\n");
-    //file.flush();
-    //file.close();
-
-    listDir(SD, "/", 0);
-
-    Serial.println(millis());
-    }*/
-  //}
 
 
-
-  //Serial.println(millis());
   Valori_Alt_Temp();       // richiamo la funzione Valori_Alt_Temp
 
   valori_alt[media] = Valori[1];
@@ -657,9 +438,6 @@ void loop() {
 
 
   float Media_P = somma / media;
-  //Serial.println(millis());
-  //if (count > media) {
-  //if (millis() - loopTime > 250) {
   //Serial.print("media");
   //Serial.println(media);
   loopTime = millis(); // reset the timer
@@ -699,17 +477,7 @@ void loop() {
   String cmd = "POV,E," + String(Vario_al_secondo).substring(0, 4) + ",P," + String(Media_P) + ",T," + String(Valori[0] / 100); // calcolo stringa NMEA OpenVario
   String checkSum0 = String(checkSum(cmd), HEX);
   Serial.println("$" + cmd + "*" + checkSum0);              //Stringa alla seriale
-  /*String POV = ("$" + cmd + "*" + checkSum0 + "\n");
-    n = POV.length();
-    char povc[n + 1];
-    strcpy(povc, POV.c_str());
-    //if (bluetooth == true) SerialBT.println("$" + cmd + "*" + checkSum0);
-    if (deviceConnected) {
-    pTxCharacteristic->setValue(povc);
-    pTxCharacteristic->notify();
 
-    //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
-    }*/
 
   int Media_P_1 = int(Media_P * 100);
   int altitudine_1 = int(altitudine);
@@ -727,15 +495,10 @@ void loop() {
   //if (bluetooth == true) SerialBT.println("$" + cmd_1 + "*" + checkSum2);
   if (bluetooth == true) {
     if (deviceConnected) {
-      n = LK8EX1.substring(0, 20).length();
-      char LK8EX1c[n + 1];
-      strcpy(LK8EX1c, LK8EX1.substring(0, 20).c_str());
-      pTxCharacteristic->setValue(LK8EX1c);
+      pTxCharacteristic->setValue(LK8EX1.substring(0, 20).c_str());
       pTxCharacteristic->notify();
-      n = LK8EX1.substring(20).length();
 
-      strcpy(LK8EX1c, LK8EX1.substring(20).c_str());
-      pTxCharacteristic->setValue(LK8EX1c);
+      pTxCharacteristic->setValue(LK8EX1.substring(20).c_str());
       pTxCharacteristic->notify();
 
       //delay(10); // bluetooth stack will go into congestion, if too many packets are sent
@@ -749,17 +512,6 @@ void loop() {
 
     Serial.print(NMEA_GGA);
     Serial.print(NMEA_RMC);
-    /*if (bluetooth == false) {
-        xTaskCreate(
-          datalogFunction,             //* Task function.
-          "datalogFunction",           //* String with name of task.
-          10000,                     //* Stack size in words.
-          (void*)&stringaMtk,      //* Parameter passed as input of the task
-          1,                         //* Priority of the task.
-          NULL);                     //* Task handle.
-      }*/
-
-
 
     String parse_nmea = NMEA_RMC;
     //Serial.println(parse_nmea);
@@ -773,40 +525,28 @@ void loop() {
     parse_nmea.remove(q);
     String date_log = parse_nmea;
     String newFile = ("/" + date_log + ".nmea");
-
-
     String date_nome_last_file;
-
 
     if (verifyFile == false) {
       date_nome_last_file = file.name();
-
 
       if (!SD.exists(newFile)) {
         File file = SD.open(newFile, FILE_WRITE);
         delay(5);
         file.close();
-
       }
       verifyFile = true;
-
     }
-    //else  {
-    //file = SD.open(newFile, FILE_APPEND);
-    //file.print(stringaMtk);
-    //}
+
     File file = SD.open(newFile, FILE_APPEND);
     file.print(NMEA_GGA + NMEA_RMC);
-
     last_gga_1 = String(gga_1.value());
   }
 
-
-
-  count = -1;
-
+  
   somma = 0;
   new_nmea = false;
+
   ///////////////////////////////////////////////////////// Menu //////////////////////////////////////////////
 
   if (M5.BtnA.wasReleased()) {
@@ -1195,13 +935,7 @@ void loop() {
                 break;
               }
             }
-            //}
-            /*else {
-              bluetooth = !bluetooth;
-              EEPROM.write(6, bluetooth);
-              EEPROM.commit();
-              //if (bluetooth == false) SerialBT.end();
-              }*/
+
 
           }
           break;
@@ -1279,8 +1013,6 @@ void loop() {
           break;
       }
 
-
-
       if (M5.BtnA.wasReleased()) {
         element++;
         if (element > 6) element = 0;
@@ -1294,13 +1026,9 @@ void loop() {
 
       }
 
-
-
-      //delay(100);
     }
 
   }
-
 
   ///////////////////////////////////////////////////////////////   Suono vario   ////////////////////////////////////////////////////////////////////
 
@@ -1389,25 +1117,24 @@ void loop() {
       }
     }
   }
+
   s++;
+
   if (s >= media) s = media;
-  count++;
-
-
-
+  
 
   while (ss.available() > 0)
     gps.encode(ss.read());
 
-
-
 }
 
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////      funzioni rilevazioni D1, D2, Temperatura e Quota, checkSum      ///////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // funzione rilevazione D1
+
 uint32_t ghet_d_1()
 {
   Wire.beginTransmission(MS5611_ADDRESS);
@@ -1429,6 +1156,7 @@ uint32_t ghet_d_1()
 }
 
 // funzione rilevazione D2
+
 uint32_t ghet_d_2()
 {
   Wire.beginTransmission(MS5611_ADDRESS);
@@ -1450,6 +1178,7 @@ uint32_t ghet_d_2()
 }
 
 // funzione calcolo Temperatura e Quota memorizzati in un array di 2
+
 void Valori_Alt_Temp()
 {
   D_1 = ghet_d_1();
@@ -1490,6 +1219,7 @@ void Valori_Alt_Temp()
 }
 
 // funzione calcolo checkSum stringa NMEA
+
 int checkSum(String theseChars) {
   char check = 0;
   // iterate over the string, XOR each byte with the total sum:
