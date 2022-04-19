@@ -585,13 +585,13 @@ void loop() {
     Serial.print("Battery ");
     Serial.println(M5.Power.getBatteryLevel());
   } else if (M5.BtnB.wasReleasefor(700)) {
-    ledcWriteTone(channel, 1000);
+    ledcWriteTone(channel, 500);
     delay(75);
     ledcWriteTone(channel, 0);
     ledcWriteTone(channel, 750);
     delay(75);
     ledcWriteTone(channel, 0);
-    ledcWriteTone(channel, 500);
+    ledcWriteTone(channel, 1000);
     delay(75);
     ledcWriteTone(channel, 0);
     M5.powerOFF();                                         // Spegne M5Stack sotto carica USB
