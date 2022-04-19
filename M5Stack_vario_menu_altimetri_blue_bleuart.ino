@@ -243,7 +243,6 @@ void setup() {
   ledcWriteTone(channel, 500);
   delay(125);
   ledcWriteTone(channel, 0);
-  delay(125);
   //}
 
   if (bluetooth == true) {
