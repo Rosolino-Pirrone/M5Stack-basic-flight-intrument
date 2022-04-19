@@ -402,6 +402,7 @@ void setup() {
 void loop() {
   M5.update();
 
+
   String GGA = ("GNGGA," + String(gga_1.value()) + "," + String(gga_2.value()) + "," + gga_3.value() + "," + String(gga_4.value()) + "," + gga_5.value() + "," + String(gga_6.value()) + "," + String(gga_7.value()) + "," + String(gga_8.value()) + "," + String(gga_9.value()) + "," + String(gga_10.value()) + "," + String(gga_11.value()) + "," + String(gga_12.value()) + "," + String(gga_13.value()) + ",");
   String checkSum_ = String(checkSum(GGA), HEX);
   NMEA_GGA = ("$" + GGA + "*" + checkSum_ + "\n");
@@ -564,6 +565,17 @@ void loop() {
   } else if (M5.BtnB.wasReleased()) {
     if (FIX == 0)M5.Speaker.beep();
     else {
+      if (!SD.begin()) {
+        SD.begin(TFCARD_CS_PIN, SPI, 40000000);
+      }
+      delay(500);
+      if (!SD.begin()) {
+        M5.Lcd.setCursor(0, 25);
+        M5.Lcd.printf("No SD");
+        Serial.println("No SD");
+        M5.Speaker.beep();
+      }
+      delay(500);
       ledcWriteTone(channel, 750);
       delay(75);
       ledcWriteTone(channel, 0);
