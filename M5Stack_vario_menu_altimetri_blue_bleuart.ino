@@ -232,7 +232,7 @@ void setup() {
   bluetooth = EEPROM.read(6);
   delay(125);
 
-  if (suono == 1) {
+  //if (suono == 1) {
     ledcWriteTone(channel, 1000);
     delay(125);
     ledcWriteTone(channel, 0);
@@ -242,7 +242,7 @@ void setup() {
     ledcWriteTone(channel, 500);
     delay(125);
     ledcWriteTone(channel, 0);
-  }
+  //}
 
   if (bluetooth == true) {
     Serial.println("The device started, now you can pair it with bluetooth!");
