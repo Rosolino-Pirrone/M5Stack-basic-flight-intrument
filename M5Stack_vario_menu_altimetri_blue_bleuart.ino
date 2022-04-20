@@ -77,15 +77,14 @@ String last_gga_1;
 String NMEA_RMC;
 String NMEA_GGA;
 bool FIX = false;
-bool new_nmea = false;
+
 static int taskCore = 1;
 String parse_nmea;
-int q;
+
 bool verifyFile = false;
+bool startDatalog = false;
 String stringaMtk;
 
-int file_number = 0;
-bool other_number = false;
 File file;
 
 bool suono = true;
@@ -137,10 +136,10 @@ hw_timer_t *timer = NULL;
 int wdtTimeout = 1000;  //time in ms to trigger the watchdog
 
 long loopTimeVario = millis();
-long loopTimeSuono = millis();
+
 long loopTimeSuonoFalse = millis();
-long loopTimeSleep = millis();
-int previous_time = 180;
+
+
 float Periodo_beep = 0;
 float Tono_beep = 0;
 float Durata_beep;
@@ -233,17 +232,17 @@ void setup() {
   bluetooth = EEPROM.read(6);
   delay(125);
 
-  //if (suono == 1) {
-  ledcWriteTone(channel, 1000);
-  delay(125);
-  ledcWriteTone(channel, 0);
-  ledcWriteTone(channel, 750);
-  delay(125);
-  ledcWriteTone(channel, 0);
-  ledcWriteTone(channel, 500);
-  delay(125);
-  ledcWriteTone(channel, 0);
-  //}
+  if (suono == 1) {
+    ledcWriteTone(channel, 1000);
+    delay(125);
+    ledcWriteTone(channel, 0);
+    ledcWriteTone(channel, 750);
+    delay(125);
+    ledcWriteTone(channel, 0);
+    ledcWriteTone(channel, 500);
+    delay(125);
+    ledcWriteTone(channel, 0);
+  }
 
   if (bluetooth == true) {
     Serial.println("The device started, now you can pair it with bluetooth!");
@@ -414,20 +413,11 @@ void loop() {
   NMEA_RMC = ("$" + RMC + "*" + checkSum_2 + "\n");
   //Serial.print(NMEA_RMC);
 
+  if (String(rmc_7.value()).toInt() > 6) startDatalog = true;
 
 
-  new_nmea = true;
-  parse_nmea = NMEA_RMC;
 
-  for (int i = 0; i < 2; i++)
-  {
-    q = parse_nmea.indexOf(",");
-    parse_nmea.remove(0, (q + 1)) ;
-  }
-  q = parse_nmea.indexOf(",");
-  parse_nmea.remove(q);
-
-  if (parse_nmea == "A") FIX = true;
+  if (String(rmc_2.value()) == "A") FIX = true;
   else FIX = false;
   //FIX = true;
 
@@ -515,23 +505,12 @@ void loop() {
 
   if (last_gga_1 != String(gga_1.value()))
   {
-
     Serial.print(NMEA_GGA);
     Serial.print(NMEA_RMC);
 
-    if (FIX == true) {
-      String parse_nmea = NMEA_RMC;
-      //Serial.println(parse_nmea);
-      int q = 0;
-      for (int i = 0; i < 9; i++)
-      {
-        q = parse_nmea.indexOf(",");
-        parse_nmea.remove(0, (q + 1)) ;
-      }
-      q = parse_nmea.indexOf(",");
-      parse_nmea.remove(q);
-      String date_log = parse_nmea;
-      String newFile = ("/" + date_log + ".nmea");
+    if (FIX == true && startDatalog == true) {
+
+      String newFile = ("/" + String(gga_9.value()) + ".nmea");
       String date_nome_last_file;
 
       if (verifyFile == false) {
@@ -547,15 +526,13 @@ void loop() {
 
       File file = SD.open(newFile, FILE_APPEND);
       file.print(NMEA_GGA + NMEA_RMC);
-
     }
+
     last_gga_1 = String(gga_1.value());
   }
 
-
-
   somma = 0;
-  new_nmea = false;
+
 
   ///////////////////////////////////////////////////////// Menu //////////////////////////////////////////////
 
