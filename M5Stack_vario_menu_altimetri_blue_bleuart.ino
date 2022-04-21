@@ -432,8 +432,8 @@ void loop() {
 
 
   //Stringhe di simulazione FIX GPS, in questo modo si può provare lo sketch
-  NMEA_GGA = "$GNGGA,101542.00,3754.20531,N,01325.61218,E,1,07,1.11,727.7,M,38.8,M,,*48\n";
-  NMEA_RMC = "$GNRMC,101542.00,A,3754.20531,N,01325.61218,E,7,225.98,190422,,,A,*5a\n";
+ // NMEA_GGA = "$GNGGA,101542.00,3754.20531,N,01325.61218,E,1,07,1.11,727.7,M,38.8,M,,*48\n";
+  //NMEA_RMC = "$GNRMC,101542.00,A,3754.20531,N,01325.61218,E,7,225.98,190422,,,A,*5a\n";
 
 
 
