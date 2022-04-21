@@ -517,7 +517,7 @@ void loop() {
 
     if (FIX == true && startDatalog == true) {
 
-      String newFile = ("/" + String(gga_9.value()) + ".nmea");
+      String newFile = ("/" + String(rmc_9.value()) + ".nmea");
       String date_nome_last_file;
 
       if (verifyFile == false) {
