@@ -413,6 +413,13 @@ void loop() {
   NMEA_RMC = ("$" + RMC + "*" + checkSum_2 + "\n");
   //Serial.print(NMEA_RMC);
 
+   /*
+     Stringhe di simulazione FIX GPS, in questo modo si può provare lo sketch
+     NMEA_GGA = $GNGGA,101542.00,3754.20531,N,01325.61218,E,1,07,1.11,727.7,M,38.8,M,,*48
+     NMEA_RMC = $GNRMC,101542.00,A,3754.20531,N,01325.61218,E,2.655,225.98,190422,,,A,*5a
+  */ 
+    
+    
   if (String(rmc_7.value()).toInt() > 6) startDatalog = true;
 
 
