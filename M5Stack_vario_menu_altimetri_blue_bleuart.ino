@@ -439,12 +439,12 @@ void loop() {
 
   if (String(rmc_7.value()).toInt() >= 6) startDatalog = true;
 
-  startDatalog = true;
+  //startDatalog = true;
 
 
   if (String(rmc_2.value()) == "A") FIX = true;
   else FIX = false;
-  FIX = true;
+  //FIX = true;
 
 
   Valori_Alt_Temp();       // richiamo la funzione Valori_Alt_Temp
