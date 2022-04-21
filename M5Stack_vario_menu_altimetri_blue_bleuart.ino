@@ -86,6 +86,7 @@ bool startDatalog = false;
 String stringaMtk;
 
 File file;
+String newFile;
 
 bool suono = true;
 bool altimetro = true;
@@ -201,6 +202,22 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels) {
   }
 }
 
+void readFile(fs::FS &fs, const char * path) {
+  Serial.printf("Reading file: %s\n", path);
+
+  File file = fs.open(path);
+  if (!file) {
+    Serial.println("Failed to open file for reading");
+    return;
+  }
+
+  Serial.print("Read from file: ");
+  while (file.available()) {
+    Serial.write(file.read());
+  }
+  file.close();
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////        setup        //////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -232,7 +249,7 @@ void setup() {
   bluetooth = EEPROM.read(6);
   delay(125);
 
-  //if (suono == 1) {
+  if (suono == 1) {
     ledcWriteTone(channel, 1000);
     delay(125);
     ledcWriteTone(channel, 0);
@@ -242,7 +259,7 @@ void setup() {
     ledcWriteTone(channel, 500);
     delay(125);
     ledcWriteTone(channel, 0);
-  //}
+  }
 
   if (bluetooth == true) {
     Serial.println("The device started, now you can pair it with bluetooth!");
@@ -413,20 +430,21 @@ void loop() {
   NMEA_RMC = ("$" + RMC + "*" + checkSum_2 + "\n");
   //Serial.print(NMEA_RMC);
 
-   /*
-     Stringhe di simulazione FIX GPS, in questo modo si può provare lo sketch
-     NMEA_GGA = $GNGGA,101542.00,3754.20531,N,01325.61218,E,1,07,1.11,727.7,M,38.8,M,,*48
-     NMEA_RMC = $GNRMC,101542.00,A,3754.20531,N,01325.61218,E,2.655,225.98,190422,,,A,*5a
-  */ 
-    
-    
-  if (String(rmc_7.value()).toInt() > 6) startDatalog = true;
 
+  //Stringhe di simulazione FIX GPS, in questo modo si può provare lo sketch
+  NMEA_GGA = "$GNGGA,101542.00,3754.20531,N,01325.61218,E,1,07,1.11,727.7,M,38.8,M,,*48\n";
+  NMEA_RMC = "$GNRMC,101542.00,A,3754.20531,N,01325.61218,E,7,225.98,190422,,,A,*5a\n";
+
+
+
+  if (String(rmc_7.value()).toInt() >= 6) startDatalog = true;
+
+  startDatalog = true;
 
 
   if (String(rmc_2.value()) == "A") FIX = true;
   else FIX = false;
-  //FIX = true;
+  FIX = true;
 
 
   Valori_Alt_Temp();       // richiamo la funzione Valori_Alt_Temp
@@ -517,7 +535,7 @@ void loop() {
 
     if (FIX == true && startDatalog == true) {
 
-      String newFile = ("/" + String(rmc_9.value()) + ".nmea");
+      newFile = ("/" + String(rmc_9.value()) + ".nmea");
       String date_nome_last_file;
 
       if (verifyFile == false) {
@@ -990,11 +1008,14 @@ void loop() {
           } else M5.Lcd.print("Off");
 
           if (M5.BtnB.wasReleased()) {
+
             M5.Lcd.fillScreen(TFT_BLACK);
             termInit();
             M5.Lcd.setTextSize(1);
             while (1) {
               M5.update();
+
+
               if (Serial.available()) {
                 int ch = Serial.read();
                 ss.write(ch);
@@ -1016,6 +1037,76 @@ void loop() {
           }
 
           break;
+        case 7:
+          M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+          M5.Lcd.setCursor(0, 0);
+          M5.Lcd.print("Impostazioni");
+          M5.Lcd.setCursor(0, 25);
+          M5.Lcd.print("Sound");
+          M5.Lcd.setCursor(200, 25);
+          if (suono == true) {
+            M5.Lcd.print("On ");
+          } else M5.Lcd.print("Off");
+          M5.Lcd.setCursor(0, 50);
+          M5.Lcd.print("Vario +");
+          M5.Lcd.setCursor(200, 50);
+          M5.Lcd.print(soglia_pos);
+          M5.Lcd.setCursor(250, 50);
+          M5.Lcd.print("cm");
+          M5.Lcd.setCursor(0, 75);
+          M5.Lcd.print("Vario -");
+          M5.Lcd.setCursor(200, 75);
+          M5.Lcd.print(soglia_neg);
+          M5.Lcd.setCursor(250, 75);
+          M5.Lcd.print("cm");
+          M5.Lcd.setCursor(0, 100);
+          M5.Lcd.print("Media");
+          M5.Lcd.setCursor(200, 100);
+          M5.Lcd.print(media);
+          M5.Lcd.setCursor(0, 125);
+          M5.Lcd.print("Bluetooth");
+          M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
+          M5.Lcd.setCursor(0, 150);
+          M5.Lcd.print("SD serial monitor");
+          Serial.println("SD serial monitor ");
+          M5.Lcd.setTextColor(TFT_GREEN, TFT_BLACK);
+          M5.Lcd.setCursor(125, 220);
+          M5.Lcd.print("On/Off");
+          M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+          M5.Lcd.setCursor(200, 125);
+          if (bluetooth == true) {
+            M5.Lcd.print("On ");
+          } else M5.Lcd.print("Off");
+
+          if (M5.BtnB.wasReleased()) {
+            int readSD = 0;
+            M5.Lcd.fillScreen(TFT_BLACK);
+            termInit();
+            M5.Lcd.setTextSize(1);
+            while (1) {
+              M5.update();
+
+              if (readSD == 0) {
+                listDir(SD, "/", 0);
+                //delay(2000);
+                readFile(SD, newFile.c_str());
+                //delay(2000);
+              }
+              readSD = 1;
+
+              if (M5.BtnB.wasReleased()) {
+                M5.Lcd.fillScreen(TFT_BLACK);
+                M5.Lcd.setTextSize(2);
+                M5.Lcd.begin();
+                break;
+              }
+            }
+          }
+
+          break;
+
+
+
         default:
           // if nothing else matches, do the default
           // default is optional
@@ -1024,7 +1115,7 @@ void loop() {
 
       if (M5.BtnA.wasReleased()) {
         element++;
-        if (element > 6) element = 0;
+        if (element > 7) element = 0;
         if (element == 0)M5.Speaker.tone(350, 200);
         else M5.Speaker.beep();
       } else if (M5.BtnB.wasReleased()) {
