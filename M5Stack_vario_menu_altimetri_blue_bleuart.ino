@@ -1079,20 +1079,13 @@ void loop() {
           } else M5.Lcd.print("Off");
 
           if (M5.BtnB.wasReleased()) {
-            int readSD = 0;
             M5.Lcd.fillScreen(TFT_BLACK);
             termInit();
             M5.Lcd.setTextSize(1);
+            listDir(SD, "/", 0);
+            readFile(SD, newFile.c_str());
             while (1) {
               M5.update();
-
-              if (readSD == 0) {
-                listDir(SD, "/", 0);
-                //delay(2000);
-                readFile(SD, newFile.c_str());
-                //delay(2000);
-              }
-              readSD = 1;
 
               if (M5.BtnB.wasReleased()) {
                 M5.Lcd.fillScreen(TFT_BLACK);
