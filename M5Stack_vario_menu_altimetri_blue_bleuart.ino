@@ -16,8 +16,8 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
-const char* ssid = "Ospiti-TIM-32862941";
-const char* password = "guest@000000";
+const char* ssid = "...............";  // Your router SSD
+const char* password = "................"; Your router password
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pTxCharacteristic;
