@@ -16,8 +16,8 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
-const char* ssid = "...............";  // Your router SSD
-const char* password = "................"; Your router password
+const char* ssid = "Arduvario M5 Update";  //SSID Arduvario
+const char* password = "................"; //Your password
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pTxCharacteristic;
@@ -1159,14 +1159,10 @@ void loop() {
             M5.Lcd.fillScreen(TFT_BLACK);
             termInit();
             M5.Lcd.setTextSize(1);
-               Serial.println("Booting");
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.println("Connection Failed! Rebooting...");
-    delay(5000);
-    ESP.restart();
-  }
+            Serial.print("Configuring access point...");
+            WiFi.softAP(ssid, password);
+            IPAddress myIP = WiFi.softAPIP();
+            Serial.println("Ready to update");
 ArduinoOTA
     .onStart([]() {
       String type;
