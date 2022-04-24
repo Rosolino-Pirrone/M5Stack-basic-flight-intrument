@@ -1192,8 +1192,7 @@ ArduinoOTA
   ArduinoOTA.begin();
 
   Serial.println("Ready");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+ 
             
             while (1) {
               M5.update();
