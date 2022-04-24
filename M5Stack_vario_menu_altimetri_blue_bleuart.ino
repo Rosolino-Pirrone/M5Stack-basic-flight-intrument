@@ -1202,6 +1202,7 @@ ArduinoOTA
                 M5.Lcd.fillScreen(TFT_BLACK);
                 M5.Lcd.setTextSize(2);
                 M5.Lcd.begin();
+                  WiFi.softAPdisconnect(true);
                 break;
               }
             }
