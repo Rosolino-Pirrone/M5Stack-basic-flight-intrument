@@ -1159,7 +1159,7 @@ void loop() {
             M5.Lcd.fillScreen(TFT_BLACK);
             termInit();
             M5.Lcd.setTextSize(1);
-            Serial.print("Configuring access point...");
+            Serial.println("Configuring access point...");
             WiFi.softAP(ssid, password);
             IPAddress myIP = WiFi.softAPIP();
             Serial.println("Ready to update");
