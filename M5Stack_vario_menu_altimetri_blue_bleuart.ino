@@ -11,9 +11,6 @@
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
-#include <ArduinoOTA.h>#include <WiFi.h>
-#include <ESPmDNS.h>
-#include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
 const char* ssid = "Arduvario M5 Update";  //SSID Arduvario
