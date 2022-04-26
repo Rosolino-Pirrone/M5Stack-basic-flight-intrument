@@ -13,8 +13,10 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
-const char* ssid = "Arduvario M5 Update";  //SSID Arduvario
-const char* password = "................"; //Your password
+
+const char* ssid = "Arduvario M5 Update";
+const char* password = "guest@000000";
+
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pTxCharacteristic;
@@ -146,6 +148,8 @@ int wdtTimeout = 1000;  //time in ms to trigger the watchdog
 long loopTimeVario = millis();
 
 long loopTimeSuonoFalse = millis();
+long timeDatalog;
+int t = 0;
 
 
 float Periodo_beep = 0;
@@ -416,7 +420,7 @@ void setup() {
 
   //Serial.print(" C_6: ");
   //Serial.println(C_6);
- 
+
   delay(1000);
 
 }
@@ -457,6 +461,17 @@ void loop() {
 
   if (String(rmc_2.value()) == "A") FIX = true;
   else FIX = false;
+  if (startDatalog == true) {
+    if (String(rmc_7.value()).toInt() < 6 && millis() - timeDatalog > 1000) {
+      t++;
+      timeDatalog = millis();
+    }
+
+  }
+  if (t > 8) {
+    startDatalog = false;
+    t = 0;
+  }
   //FIX = true;
 
 
@@ -545,10 +560,10 @@ void loop() {
   {
     Serial.print(NMEA_GGA);
     Serial.print(NMEA_RMC);
-
+    newFile = ("/" + String(rmc_9.value()) + ".nmea");
     if (FIX == true && startDatalog == true) {
 
-      newFile = ("/" + String(rmc_9.value()) + ".nmea");
+
       String date_nome_last_file;
 
       if (verifyFile == false) {
@@ -1099,7 +1114,7 @@ void loop() {
             readFile(SD, newFile.c_str());
             while (1) {
               M5.update();
-             
+
               if (M5.BtnB.wasReleased()) {
                 M5.Lcd.fillScreen(TFT_BLACK);
                 M5.Lcd.setTextSize(2);
@@ -1111,7 +1126,7 @@ void loop() {
 
           break;
 
-          case 8:
+        case 8:
           M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
           M5.Lcd.setCursor(0, 0);
           M5.Lcd.print("Impostazioni");
@@ -1160,37 +1175,35 @@ void loop() {
             WiFi.softAP(ssid, password);
             IPAddress myIP = WiFi.softAPIP();
             Serial.println("Ready to update");
-ArduinoOTA
-    .onStart([]() {
-      String type;
-      if (ArduinoOTA.getCommand() == U_FLASH)
-        type = "sketch";
-      else // U_SPIFFS
-        type = "filesystem";
+            ArduinoOTA
+            .onStart([]() {
+              String type;
+              if (ArduinoOTA.getCommand() == U_FLASH)
+                type = "sketch";
+              else // U_SPIFFS
+                type = "filesystem";
 
-      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-      Serial.println("Start updating " + type);
-    })
-    .onEnd([]() {
-      Serial.println("\nEnd");
-    })
-    .onProgress([](unsigned int progress, unsigned int total) {
-      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    })
-    .onError([](ota_error_t error) {
-      Serial.printf("Error[%u]: ", error);
-      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-      else if (error == OTA_END_ERROR) Serial.println("End Failed");
-    });
+              // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+              Serial.println("Start updating " + type);
+            })
+            .onEnd([]() {
+              Serial.println("\nEnd");
+            })
+            .onProgress([](unsigned int progress, unsigned int total) {
+              Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+            })
+            .onError([](ota_error_t error) {
+              Serial.printf("Error[%u]: ", error);
+              if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+              else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+              else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+              else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+              else if (error == OTA_END_ERROR) Serial.println("End Failed");
+            });
 
-  ArduinoOTA.begin();
+            ArduinoOTA.begin();
+            Serial.println("Ready");
 
-  Serial.println("Ready");
- 
-            
             while (1) {
               M5.update();
               ArduinoOTA.handle();
@@ -1199,7 +1212,7 @@ ArduinoOTA
                 M5.Lcd.fillScreen(TFT_BLACK);
                 M5.Lcd.setTextSize(2);
                 M5.Lcd.begin();
-                  WiFi.softAPdisconnect(true);
+                WiFi.softAPdisconnect(true);
                 break;
               }
             }
