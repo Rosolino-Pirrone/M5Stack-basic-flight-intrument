@@ -469,7 +469,7 @@ void loop() {
 
   }
     
-    if (t > 0 && rmc_7.value().toInt() >= 6) t = 0;
+    if (t > 0 && String(rmc_7.value()).toInt() >= 6) t = 0;
     
   if (t > 8) {
     startDatalog = false;
