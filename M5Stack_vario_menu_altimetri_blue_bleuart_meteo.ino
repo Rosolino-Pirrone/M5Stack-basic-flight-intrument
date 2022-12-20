@@ -33,12 +33,12 @@ void printLocalTime()
   Serial.println(dati);
 }
 
-#define WIFI_SSID "Ospiti-TIM-32862941"
-#define WIFI_PASS "guest@000000"
+#define WIFI_SSID "Your SSID"
+#define WIFI_PASS "Your router password"
 
-char ftp_server[] = "ftp.rosolinonet.altervista.org";
-char ftp_user[]   = "rosolinonet";
-char ftp_pass[]   = "R6hueEuHD5Dn";
+char ftp_server[] = "Your ftp server, (es. ftp.rosolinonet.altervista.org)";
+char ftp_user[]   = "Your username ftp, (es. rosolinonet)";
+char ftp_pass[]   = "Your password server ftp";
 
 // you can pass a FTP timeout and debbug mode on the last 2 arguments
 ESP32_FTPClient ftp (ftp_server, ftp_user, ftp_pass, 5000, 2);
